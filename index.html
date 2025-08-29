@@ -2,46 +2,55 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Mitt UF-företag</title>
+  <title>Min startsida</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #fff8f0;
+      text-align: center;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
       color: #333;
     }
 
-    /* Menystyling */
+    /* Meny */
     nav {
-      margin-bottom: 30px;
+      margin: 30px 0;
     }
 
-    nav a {
-      text-decoration: none;
-      padding: 10px 20px;
-      margin-right: 10px;
-      background-color: #f4a261;
+    nav button {
+      padding: 12px 25px;
+      margin: 5px;
+      background: linear-gradient(45deg, #ff7e5f, #feb47b);
       color: white;
-      border-radius: 5px;
+      border: none;
+      border-radius: 10px;
       font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
     }
 
-    nav a:hover {
-      background-color: #e76f51;
+    nav button:hover {
+      background: linear-gradient(45deg, #feb47b, #ff7e5f);
+      transform: scale(1.05);
+    }
+
+    /* Innehåll */
+    .page {
+      display: none;
+      margin-top: 50px;
+    }
+
+    .active {
+      display: block;
     }
 
     h1 {
-      color: #264653;
+      font-size: 36px;
     }
 
     p {
-      font-size: 18px;
-    }
-
-    img {
-      max-width: 400px;
-      border-radius: 10px;
-      margin-top: 20px;
+      font-size: 20px;
     }
   </style>
 </head>
@@ -49,18 +58,50 @@
 
   <!-- Meny -->
   <nav>
-    <a href="index.html">Hem</a>
-    <a href="produkter.html">Produkter</a>
-    <a href="omoss.html">Om oss</a>
-    <a href="kontakt.html">Kontakt</a>
+    <button onclick="showPage('home')">Hem</button>
+    <button onclick="showPage('menu1')">Meny 1</button>
+    <button onclick="showPage('menu2')">Meny 2</button>
+    <button onclick="showPage('menu3')">Meny 3</button>
+    <button onclick="showPage('menu4')">Meny 4</button>
+    <button onclick="showPage('menu5')">Meny 5</button>
   </nav>
 
-  <!-- Välkomsttext -->
-  <h1>Välkommen till [Ditt UF-företag]!</h1>
-  <p>Vi säljer handgjorda och nyttiga müslibars – perfekta för en hälsosam energikick när som helst på dagen.</p>
+  <!-- Innehåll -->
+  <div id="home" class="page active">
+    <h1>Välkommen till min sida</h1>
+    <p>Klicka på menyerna ovan för att se innehållet.</p>
+  </div>
 
-  <!-- Bild på produkten -->
-  <img src="minbild.png" alt="Müslibars">
+  <div id="menu1" class="page">
+    <h1>Kommer snart</h1>
+  </div>
+
+  <div id="menu2" class="page">
+    <h1>Kommer snart</h1>
+  </div>
+
+  <div id="menu3" class="page">
+    <h1>Kommer snart</h1>
+  </div>
+
+  <div id="menu4" class="page">
+    <h1>Kommer snart</h1>
+  </div>
+
+  <div id="menu5" class="page">
+    <h1>Kommer snart</h1>
+  </div>
+
+  <script>
+    function showPage(id) {
+      // Dölj alla sidor
+      const pages = document.querySelectorAll('.page');
+      pages.forEach(page => page.classList.remove('active'));
+
+      // Visa vald sida
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
 
 </body>
 </html>
