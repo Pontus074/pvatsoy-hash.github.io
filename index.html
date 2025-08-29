@@ -6,16 +6,22 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f4f8;
       margin: 0;
       padding: 0;
-      color: #333;
+      color: #fff;
+      /* Bakgrundsbild */
+      background: url('minbild.png') no-repeat center center fixed;
+      background-size: cover;
+      text-align: center;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Flyttar texten mot mitten vertikalt */
     }
 
     /* Meny */
     nav {
-      margin: 30px 0;
+      margin-bottom: 30px;
     }
 
     nav button {
@@ -38,7 +44,8 @@
     /* Innehåll */
     .page {
       display: none;
-      margin-top: 50px;
+      margin-top: 20px;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.5); /* gör texten lättare att läsa */
     }
 
     .active {
@@ -94,11 +101,8 @@
 
   <script>
     function showPage(id) {
-      // Dölj alla sidor
       const pages = document.querySelectorAll('.page');
       pages.forEach(page => page.classList.remove('active'));
-
-      // Visa vald sida
       document.getElementById(id).classList.add('active');
     }
   </script>
