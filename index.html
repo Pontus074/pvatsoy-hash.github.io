@@ -2,82 +2,38 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Min hemsida med flera sidor</title>
+  <title>Min startsida</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
+    /* Enkel styling för menyerna */
     nav {
-      background: #333;
-      padding: 10px;
+      margin-bottom: 20px;
     }
-    nav button {
-      background: #555;
-      color: white;
-      border: none;
+    nav a {
+      text-decoration: none;
       padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
+      margin-right: 10px;
+      background-color: #ddd;
+      color: black;
       border-radius: 5px;
     }
-    nav button:hover {
-      background: #777;
-    }
-    .page {
-      display: none;
-      padding: 40px;
-    }
-    .active {
-      display: block;
+    nav a:hover {
+      background-color: #aaa;
     }
   </style>
 </head>
 <body>
+
+  <!-- Meny -->
   <nav>
-    <button onclick="showPage(1)">Sida 1</button>
-    <button onclick="showPage(2)">Sida 2</button>
-    <button onclick="showPage(3)">Sida 3</button>
-    <button onclick="showPage(4)">Sida 4</button>
-    <button onclick="showPage(5)">Sida 5</button>
+    <a href="sida1.html">Meny 1</a>
+    <a href="sida2.html">Meny 2</a>
+    <a href="sida3.html">Meny 3</a>
+    <a href="sida4.html">Meny 4</a>
   </nav>
 
-  <div id="page1" class="page active">
-  <h1>Sida 1</h1>
-  <p>Detta är min gratis hemsida.</p>
-  <img src="minbild.png" alt="Min bild" width="400">
-</div>
+  <!-- Välkomsttext -->
+  <h1>Välkommen till min sida!</h1>
+  <p>Här kan du klicka på menyerna ovan för att gå till olika sidor.</p>
 
-  <div id="page2" class="page">
-    <h1>Sida 2</h1>
-    <p>Här står texten för andra sidan.</p>
-  </div>
-
-  <div id="page3" class="page">
-    <h1>Sida 3</h1>
-    <p>Detta är texten på tredje sidan.</p>
-  </div>
-
-  <div id="page4" class="page">
-    <h1>Sida 4</h1>
-    <p>Detta är texten på fjärde sidan.</p>
-  </div>
-
-  <div id="page5" class="page">
-    <h1>Sida 5</h1>
-    <p>Detta är texten på femte sidan.</p>
-  </div>
-
-  <script>
-    function showPage(num) {
-      // Göm alla sidor
-      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-      // Visa vald sida
-      document.getElementById("page" + num).classList.add("active");
-    }
-  </script>
 </body>
 </html>
