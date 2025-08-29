@@ -9,31 +9,35 @@
       margin: 0;
       padding: 0;
       color: #fff;
-      /* Bakgrundsbild */
       background: url('minbild.png') no-repeat center center fixed;
       background-size: cover;
       text-align: center;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center; /* Flyttar texten mot mitten vertikalt */
+      justify-content: flex-start; /* Menyn längst upp */
     }
 
     /* Meny */
     nav {
-      margin-bottom: 30px;
+      margin: 20px 0; /* Liten marginal runt menyn */
+      display: flex;
+      justify-content: center;
+      gap: 15px; /* Mellanrum mellan knapparna */
+      flex-wrap: wrap; /* Om fönstret blir litet */
     }
 
     nav button {
-      padding: 12px 25px;
-      margin: 5px;
+      padding: 12px 30px;
       background: linear-gradient(45deg, #ff7e5f, #feb47b);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: bold;
       cursor: pointer;
       transition: 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      font-size: 16px;
     }
 
     nav button:hover {
@@ -44,8 +48,8 @@
     /* Innehåll */
     .page {
       display: none;
-      margin-top: 20px;
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.5); /* gör texten lättare att läsa */
+      margin-top: 80px; /* Flyttade texten lite ner från toppen */
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
     }
 
     .active {
@@ -53,11 +57,12 @@
     }
 
     h1 {
-      font-size: 36px;
+      font-size: 38px;
+      margin-bottom: 15px;
     }
 
     p {
-      font-size: 20px;
+      font-size: 22px;
     }
   </style>
 </head>
