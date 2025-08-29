@@ -2,35 +2,81 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Min första hemsida</title>
+  <title>Min hemsida med flera sidor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      text-align: center;
+      background: #f0f0f0;
       margin: 0;
-      padding: 50px;
+      padding: 0;
+      text-align: center;
     }
-    h1 {
-      color: #333;
+    nav {
+      background: #333;
+      padding: 10px;
     }
-    p {
-      color: #555;
+    nav button {
+      background: #555;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
     }
-    .box {
-      margin: 30px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      width: 400px;
+    nav button:hover {
+      background: #777;
+    }
+    .page {
+      display: none;
+      padding: 40px;
+    }
+    .active {
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Hej världen! 🌍</h1>
-    <p>Det här är min helt egna gratis hemsida via GitHub Pages.</p>
+  <nav>
+    <button onclick="showPage(1)">Sida 1</button>
+    <button onclick="showPage(2)">Sida 2</button>
+    <button onclick="showPage(3)">Sida 3</button>
+    <button onclick="showPage(4)">Sida 4</button>
+    <button onclick="showPage(5)">Sida 5</button>
+  </nav>
+
+  <div id="page1" class="page active">
+    <h1>Sida 1</h1>
+    <p>Detta är texten på första sidan.</p>
   </div>
+
+  <div id="page2" class="page">
+    <h1>Sida 2</h1>
+    <p>Här står texten för andra sidan.</p>
+  </div>
+
+  <div id="page3" class="page">
+    <h1>Sida 3</h1>
+    <p>Detta är texten på tredje sidan.</p>
+  </div>
+
+  <div id="page4" class="page">
+    <h1>Sida 4</h1>
+    <p>Detta är texten på fjärde sidan.</p>
+  </div>
+
+  <div id="page5" class="page">
+    <h1>Sida 5</h1>
+    <p>Detta är texten på femte sidan.</p>
+  </div>
+
+  <script>
+    function showPage(num) {
+      // Göm alla sidor
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      // Visa vald sida
+      document.getElementById("page" + num).classList.add("active");
+    }
+  </script>
 </body>
 </html>
