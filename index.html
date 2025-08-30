@@ -1,195 +1,742 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-<meta charset="UTF-8">
-<title>Pingis 🏓 - Nivåer & Hinder</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Car Drift 3D 🚗💨</title>
 <style>
-body {margin:0;font-family:Arial;background:#222;color:white;text-align:center;}
-header{background:#111;padding:15px;}
-#gameCanvas{background:#2c3e50;display:block;margin:20px auto;border:4px solid #ecf0f1;border-radius:10px;touch-action:none;}
-#menu,#gameOverScreen{display:none;margin-top:30px;}
-button{background:#1abc9c;border:none;padding:12px 25px;margin:10px;color:white;font-size:16px;border-radius:5px;cursor:pointer;}
-button:hover{background:#16a085;}
+  :root {
+    --ui-bg: rgba(0,0,0,.55);
+    --ui-text: #fff;
+    --accent: #00d1b2;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#0b1420;font-family:system-ui,Arial}
+  canvas{display:block}
+  /* Menyer */
+  #menu,#garage,#mapSelect,#hud,#pause {
+    position: absolute; inset: 0; display:none; align-items:center; justify-content:center;
+    color: var(--ui-text);
+  }
+  .panel {
+    background: var(--ui-bg);
+    padding: 20px; border-radius: 16px; width:min(92vw,560px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.4); backdrop-filter: blur(6px);
+  }
+  h1,h2{margin:.2em 0}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .row > button, .row > .tile {flex:1}
+  button {
+    background:#1f2a44; color:var(--ui-text); border:none; padding:12px 16px; border-radius:12px;
+    font-size:16px; cursor:pointer; transition:transform .08s ease, background .2s ease;
+  }
+  button:hover{background:#293758}
+  button:active{transform:scale(.98)}
+  .pill{background:var(--accent); color:#03131a; font-weight:700}
+  .tile{
+    background:#152033; padding:12px; border-radius:12px; min-width:150px
+  }
+  .money {font-weight:700; color:#ffd76b}
+  /* HUD */
+  #hud{display:none; pointer-events:none}
+  #hud .hudbar{
+    position:absolute; top:10px; left:10px; background:var(--ui-bg); padding:10px 12px; border-radius:12px;
+  }
+  #hud .rightbar{
+    position:absolute; top:10px; right:10px; background:var(--ui-bg); padding:10px 12px; border-radius:12px;
+    text-align:right;
+  }
+  #hud .center{
+    position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+    background:var(--ui-bg); padding:8px 12px; border-radius:12px;
+  }
+  /* Mobilkontroller */
+  #controls {
+    position:absolute; inset:0; display:none; pointer-events:none;
+  }
+  .pad {
+    position:absolute; bottom:12px; left:12px; display:grid; grid-template-columns:repeat(3,56px);
+    grid-template-rows:repeat(2,56px); gap:10px; pointer-events:auto;
+  }
+  .pad button, .act button {
+    width:56px; height:56px; border-radius:16px; background:#21314f; color:#dfe7ff; border:1px solid #2d416b;
+  }
+  .act {
+    position:absolute; bottom:12px; right:12px; display:flex; gap:10px; pointer-events:auto;
+  }
+  .act button { width:84px; height:56px }
+  .label {opacity:.85}
+  /* Paus-overlay */
+  #pause .panel { text-align:center }
 </style>
 </head>
 <body>
-<header><h1>🏓 Pingis 🏓</h1></header>
-<canvas id="gameCanvas" width="700" height="400"></canvas>
-
-<div id="menu">
-  <h2>Välkommen!</h2>
-  <p>Flytta racketen med mus, piltangenter eller finger på mobilen.</p>
-  <button onclick="startGame()">Starta spelet</button>
+<div id="menu" style="display:flex">
+  <div class="panel">
+    <h1>Car Drift 3D</h1>
+    <p>Kör, drifta och tjäna pengar. Köp uppgraderingar och lås upp kartor.</p>
+    <div class="row" style="margin:10px 0">
+      <button class="pill" id="playBtn">Spela</button>
+      <button id="mapBtn">Välj karta</button>
+      <button id="garageBtn">Garage/Shop</button>
+    </div>
+    <div class="row">
+      <div class="tile">
+        <h3>Kontroller (PC)</h3>
+        <div class="label">W/S = Gas/Broms</div>
+        <div class="label">A/D = Styrning</div>
+        <div class="label">Space = Handbroms</div>
+        <div class="label">Shift = Nitro</div>
+        <div class="label">R = Reset bil</div>
+        <div class="label">P/Esc = Paus</div>
+      </div>
+      <div class="tile">
+        <h3>Kontroller (Mobil)</h3>
+        <div class="label">Pilar = Styr</div>
+        <div class="label">Gas/Broms</div>
+        <div class="label">Drift/Nitro-knappar</div>
+      </div>
+      <div class="tile">
+        <h3>Ditt konto</h3>
+        <div class="label">Pengar: <span class="money" id="moneyMenu">0</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div id="gameOverScreen">
-  <h2>Game Over!</h2>
-  <p id="finalScore"></p>
-  <button onclick="startGame()">Starta om</button>
-  <button onclick="goHome()">Till start</button>
+<div id="mapSelect">
+  <div class="panel">
+    <h2>Välj karta</h2>
+    <div class="row" id="mapList"></div>
+    <div style="margin-top:10px"><button id="backFromMap">Tillbaka</button></div>
+  </div>
 </div>
+
+<div id="garage">
+  <div class="panel">
+    <h2>Garage & Shop</h2>
+    <div class="row">
+      <div class="tile" style="flex:2">
+        <h3>Uppgraderingar</h3>
+        <div id="upgrades"></div>
+      </div>
+      <div class="tile" style="flex:1">
+        <h3>Bilfärg</h3>
+        <div id="skins" class="row"></div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px">
+      <div>Pengar: <span class="money" id="moneyGarage">0</span></div>
+      <div class="row" style="gap:8px">
+        <button id="testDrive">Testkör</button>
+        <button id="backFromGarage">Tillbaka</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="hudbar">
+    🚗 Hast: <span id="speed">0</span> | Drift: <span id="drift">0</span> | 💰 <span id="money">0</span>
+  </div>
+  <div class="rightbar">
+    🗺️ <span id="mapName">Parkering</span><br/>
+    ⏱️ Tid: <span id="time">0</span>s
+  </div>
+  <div class="center">
+    <span id="info">Klart för drift!</span>
+  </div>
+</div>
+
+<div id="pause">
+  <div class="panel">
+    <h2>Paus</h2>
+    <p>Fortsätt, restart eller tillbaka till menyn.</p>
+    <div class="row">
+      <button id="resumeBtn" class="pill">Fortsätt</button>
+      <button id="restartBtn">Restart</button>
+      <button id="exitBtn">Meny</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobilkontroller -->
+<div id="controls">
+  <div class="pad">
+    <div></div> <button id="leftBtn">⟵</button> <div></div>
+    <button id="brakeBtn">⏹</button> <button id="rightBtn">⟶</button> <div></div>
+  </div>
+  <div class="act">
+    <button id="gasBtn">GAS</button>
+    <button id="driftBtn">DRIFT</button>
+    <button id="nitroBtn">NITRO</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+/* =========================
+   SAVE / ECONOMY
+========================= */
+const saveKey = "carDrift3D_save_v1";
+const defaultSave = {
+  money: 0,
+  upgrades: { engine: 0, tires: 0 },
+  skin: "cyan",
+  map: "lot",
+  unlockedMaps: ["lot"]
+};
+let SAVE = loadSave();
 
-let player = {x:20,y:canvas.height/2-40,width:10,height:80};
-let ai = {x:canvas.width-30,y:canvas.height/2-40,width:10,height:80};
-let ball, score, lives, level, speed, aiSpeed, nextLevelScore;
-let playing = false;
-let targetY = player.y;
-let keyUp = false, keyDown = false;
-let obstacles = [];
+function loadSave(){
+  try{
+    const s = JSON.parse(localStorage.getItem(saveKey));
+    if(!s) return {...defaultSave};
+    return {...defaultSave, ...s, upgrades:{...defaultSave.upgrades, ...(s.upgrades||{})}};
+  }catch(e){ return {...defaultSave};}
+}
+function commit(){ localStorage.setItem(saveKey, JSON.stringify(SAVE)); updateMoneyUI(); }
 
-function resetBall() {
-  ball = {
-    x: canvas.width/2,
-    y: canvas.height/2,
-    radius: 8,
-    speedX: speed*(Math.random()>0.5?1:-1),
-    speedY: speed*(Math.random()>0.5?1:-1)
+/* =========================
+   UI
+========================= */
+const menu = document.getElementById('menu');
+const hud = document.getElementById('hud');
+const garage = document.getElementById('garage');
+const mapSelect = document.getElementById('mapSelect');
+const pauseUI = document.getElementById('pause');
+const controlsUI = document.getElementById('controls');
+
+const moneyEls = [document.getElementById('money'), document.getElementById('moneyMenu'), document.getElementById('moneyGarage')];
+function updateMoneyUI(){ moneyEls.forEach(el=> el.textContent = SAVE.money); }
+updateMoneyUI();
+
+/* =========================
+   THREE SETUP
+========================= */
+let scene, camera, renderer, clock;
+let world, car, carBody, camTarget;
+let running=false, paused=false, testMode=false;
+let elapsed=0, driftScore=0, driftChain=0;
+
+const maps = [
+  { id:"lot", name:"Parkering", price:0 },
+  { id:"canyon", name:"Kanyon", price:500 }
+];
+
+const colors = [
+  {id:"cyan", name:"Cyan", color:0x00ffff},
+  {id:"red", name:"Röd", color:0xff4d4d},
+  {id:"lime", name:"Lime", color:0x8aff5c},
+  {id:"gold", name:"Guld", color:0xffd76b}
+];
+
+/* =========================
+   GAME PARAMETERS
+========================= */
+function getStats(){
+  // bas + uppgraderingar
+  const engine = 1 + SAVE.upgrades.engine*0.15;   // acceleration + max speed
+  const grip = 0.9 + SAVE.upgrades.tires*0.05;    // däckgrepp
+  return { engine, grip };
+}
+
+const input = {
+  gas:false, brake:false, left:false, right:false,
+  handbrake:false, nitro:false
+};
+
+/* =========================
+   BUILD WORLD
+========================= */
+function buildRenderer(){
+  if(renderer) return;
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+  document.body.appendChild(renderer.domElement);
+  window.addEventListener('resize', ()=>{
+    if(!camera) return;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+function buildScene(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0e1624);
+  clock = new THREE.Clock();
+
+  camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 6, -12);
+
+  const hemi = new THREE.HemisphereLight(0xddeeff, 0x0b0b11, 0.6);
+  scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, .85);
+  dir.position.set(10,20,10);
+  dir.castShadow = false;
+  scene.add(dir);
+
+  // Ground
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshStandardMaterial({color:0x122033, roughness:.95, metalness:0})
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  camTarget = new THREE.Object3D();
+  scene.add(camTarget);
+
+  // Coins
+  world = { obstacles: [], coins: [], bounds: 95 };
+}
+
+function addWall(x,z,w,h,rot=0,color=0x2a3b5f){
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, 2, h),
+    new THREE.MeshStandardMaterial({color, roughness:.8, metalness:0})
+  );
+  mesh.position.set(x,1,z);
+  mesh.rotation.y = rot;
+  scene.add(mesh);
+  world.obstacles.push(mesh);
+}
+function addCoin(x,z){
+  const geo = new THREE.TorusGeometry(0.8,0.25,12,24);
+  const mat = new THREE.MeshStandardMaterial({color:0xffd76b, emissive:0x332200, emissiveIntensity:.3});
+  const c = new THREE.Mesh(geo, mat);
+  c.position.set(x,1.2,z);
+  c.rotation.x = Math.PI/2;
+  scene.add(c);
+  world.coins.push(c);
+}
+
+/* Maps */
+function buildLot(){
+  // Parkering – rektangulära väggar + pelare
+  const b = world.bounds;
+  addWall(0,-b, 180,2,0);
+  addWall(0,b, 180,2,0);
+  addWall(-b,0, 2,180,0);
+  addWall(b,0, 2,180,0);
+  // rutor & hinder
+  for(let i=-70;i<=70;i+=20){
+    addWall(i, 0, 2, 30, 0, 0x243454);
+  }
+  for(let z=-60; z<=60; z+=30){
+    for(let x=-60; x<=60; x+=30){
+      if(Math.random()<.5) addWall(x,z,8,2,0,0x354a6f);
+    }
+  }
+  // coins
+  for(let i=0;i<24;i++){
+    addCoin((Math.random()*160-80)|0, (Math.random()*160-80)|0);
+  }
+}
+function buildCanyon(){
+  const b = world.bounds;
+  addWall(0,-b, 180,2,0,0x3a2b1c);
+  addWall(0,b, 180,2,0,0x3a2b1c);
+  addWall(-b,0, 2,180,0,0x3a2b1c);
+  addWall(b,0, 2,180,0,0x3a2b1c);
+
+  // slingrig bana som klippor
+  for(let i=-70;i<70;i+=12){
+    const w = 8 + Math.random()*6;
+    addWall(i, Math.sin(i*0.12)*30, w, 2, Math.random(), 0x5b3c1f);
+    addWall(i+6, Math.cos(i*0.11)*34, w, 2, Math.random(), 0x603f22);
+  }
+  for(let i=0;i<28;i++){
+    addCoin((Math.random()*160-80)|0, (Math.random()*160-80)|0);
+  }
+}
+
+/* Car */
+function buildCar(){
+  // body
+  const color = colors.find(c=>c.id===SAVE.skin)?.color || 0x00ffff;
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, .7, 4),
+    new THREE.MeshStandardMaterial({color, roughness:.5, metalness:.3})
+  );
+  body.position.set(0,.6,0);
+  // roof
+  const roof = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, .5, 1.6),
+    new THREE.MeshStandardMaterial({color:0x111821, roughness:.8})
+  );
+  roof.position.set(0,1.15,-0.2);
+  // wheels (dekor)
+  const wheelGeo = new THREE.CylinderGeometry(.55,.55,.4,16);
+  wheelGeo.rotateZ(Math.PI/2);
+  const wheelMat = new THREE.MeshStandardMaterial({color:0x222, roughness:.9});
+  const w1 = new THREE.Mesh(wheelGeo,wheelMat); w1.position.set(-.95,.35, 1.35);
+  const w2 = new THREE.Mesh(wheelGeo,wheelMat); w2.position.set(.95,.35, 1.35);
+  const w3 = new THREE.Mesh(wheelGeo,wheelMat); w3.position.set(-.95,.35, -1.35);
+  const w4 = new THREE.Mesh(wheelGeo,wheelMat); w4.position.set(.95,.35, -1.35);
+
+  car = new THREE.Group();
+  car.add(body, roof, w1,w2,w3,w4);
+  scene.add(car);
+
+  // kinematisk "fysik"
+  carBody = {
+    pos: new THREE.Vector3(0,0,0),
+    vel: new THREE.Vector3(0,0,0),
+    heading: 0, // rad
+    steerAngle: 0
   };
 }
 
-function startGame() {
-  score = 0;
-  lives = 3;
-  level = 1;
-  speed = 3; // lite långsammare i början
-  aiSpeed = 2.5;
-  nextLevelScore = 8;
-  obstacles = [];
-  playing = true;
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("gameOverScreen").style.display = "none";
-  resetBall();
-  gameLoop();
+/* =========================
+   START / STOP
+========================= */
+function startGame({mapId, isTest=false}){
+  testMode = !!isTest;
+  running=true; paused=false; elapsed=0; driftScore=0; driftChain=0;
+
+  menu.style.display="none";
+  garage.style.display="none";
+  mapSelect.style.display="none";
+  pauseUI.style.display="none";
+  hud.style.display="block";
+
+  // mobilkontroller visas på touch
+  controlsUI.style.display = ('ontouchstart' in window) ? "block" : "none";
+
+  buildRenderer();
+  buildScene();
+  buildCar();
+
+  // map
+  const id = mapId || SAVE.map || "lot";
+  document.getElementById('mapName').textContent = (maps.find(m=>m.id===id)?.name)||"";
+  if(id==="lot") buildLot(); else if(id==="canyon") buildCanyon();
+
+  animate();
 }
 
-function goHome() {
-  document.getElementById("menu").style.display = "block";
-  document.getElementById("gameOverScreen").style.display = "none";
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function stopGame(toMenu=true){
+  running=false;
+  paused=false;
+  if(renderer){ renderer.clear(); }
+  hud.style.display="none";
+  controlsUI.style.display="none";
+  if(toMenu){ menu.style.display="flex"; updateMoneyUI(); }
+  // cleanup scene
+  scene = null; camera=null; world=null; car=null; carBody=null;
 }
 
-function gameOver() {
-  playing = false;
-  document.getElementById("finalScore").textContent = "Din poäng: "+score+" | Nivå: "+level;
-  document.getElementById("gameOverScreen").style.display = "block";
+/* =========================
+   GAME LOOP
+========================= */
+function animate(){
+  if(!running) return;
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.033, clock.getDelta()); // clamp 30ms
+  elapsed += dt;
+  document.getElementById('time').textContent = Math.floor(elapsed);
+
+  updatePhysics(dt);
+  collectCoins();
+  updateHUD(dt);
+
+  renderer.render(scene, camera);
 }
 
-function updatePlayer() {
-  if(keyUp) targetY -= 6;
-  if(keyDown) targetY += 6;
-  player.y += (targetY - player.y) * 0.2;
-  player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-}
+/* =========================
+   CAR PHYSICS (arcade drift)
+========================= */
+function updatePhysics(dt){
+  const stats = getStats();
+  const accBase = 18 * stats.engine;
+  const maxSpeed = 26 * stats.engine;
+  const steerSpeed = 2.6;
+  const grip = 8.0 * stats.grip;    // lateralt grepp
+  const drag = 0.98;                // rullmotstånd
+  const handbrakeGrip = input.handbrake ? 2.2 : 1.0;
+  const nitroBoost = input.nitro ? 1.35 : 1.0;
 
-function addObstacles() {
-  obstacles = [];
-  for(let i=0;i<level-1;i++){
-    let obsX = Math.random()*(canvas.width*0.6)+canvas.width*0.2;
-    let obsY = Math.random()*(canvas.height-30);
-    obstacles.push({x:obsX, y:obsY, width:15, height:50});
-  }
-}
+  // styrning
+  const targetSteer = (input.left?1:0) - (input.right?1:0);
+  carBody.steerAngle += (targetSteer*0.55 - carBody.steerAngle) * Math.min(1, dt*steerSpeed);
 
-function gameLoop() {
-  if(!playing) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // framåtriktning
+  const fwd = new THREE.Vector3(Math.sin(carBody.heading),0,Math.cos(carBody.heading)*-1);
+  const right = new THREE.Vector3(fwd.z,0,-fwd.x);
 
-  // Rita hinder
-  ctx.fillStyle = "red";
-  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
+  // acceleration/broms
+  let throttle = (input.gas?1:0) - (input.brake?1:0);
+  let accel = fwd.clone().multiplyScalar(throttle * accBase * dt * nitroBoost);
 
-  // Rita spelplan
-  ctx.fillStyle = "white";
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-  ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
-  ctx.fill();
+  // uppdatera hastighet (drag)
+  carBody.vel.multiplyScalar(drag);
+  carBody.vel.add(accel);
 
-  ctx.font = "16px Arial";
-  ctx.fillText("Poäng: "+score, 20, 20);
-  ctx.fillText("Liv: "+lives, 20, 40);
-  ctx.fillText("Nivå: "+level, 20, 60);
+  // maxfart
+  if(carBody.vel.length()>maxSpeed) carBody.vel.setLength(maxSpeed);
 
-  updatePlayer();
+  // sidoglid (drift): reducera lateral hastighet mot 0 beroende på grepp
+  const vF = carBody.vel.dot(fwd);
+  const vR = carBody.vel.dot(right);
+  const vR_corrected = vR * Math.exp(-grip*handbrakeGrip*dt); // mjuk sladd
+  carBody.vel = fwd.multiplyScalar(vF).add(right.multiplyScalar(vR_corrected));
 
-  // Bollrörelse
-  ball.x += ball.speedX;
-  ball.y += ball.speedY;
+  // rotera bilen utifrån styrvinkel & fart
+  const turn = carBody.steerAngle * (carBody.vel.length()*0.03);
+  carBody.heading += turn * dt;
 
-  // Studsa på topp & botten
-  if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) ball.speedY *= -1;
+  // position
+  carBody.pos.add(carBody.vel.clone().multiplyScalar(dt));
 
-  // Spelare-kollision
-  if(ball.x - ball.radius < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) {
-    ball.speedX *= -1;
-    score++;
-    if(score % 5 === 0){ speed += 0.3; aiSpeed += 0.2; }
-
-    // Nivåprogression med tröskel
-    if(score >= nextLevelScore) {
-      level = Math.min(10, level + 1);
-      addObstacles();
-      nextLevelScore += 8;
+  // enkel kollision mot väggar (AABB)
+  if(world){
+    const b = world.bounds-2;
+    carBody.pos.x = Math.max(-b, Math.min(b, carBody.pos.x));
+    carBody.pos.z = Math.max(-b, Math.min(b, carBody.pos.z));
+    // väggblock
+    for(const obs of world.obstacles){
+      if(aabbHit(carBody.pos, obs)){
+        // studsa bakåt lite
+        carBody.pos.add(carBody.vel.clone().multiplyScalar(-dt*1.5));
+        // dämpa fart
+        carBody.vel.multiplyScalar(0.6);
+      }
     }
   }
 
-  // AI-kollision
-  if(ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) {
-    ball.speedX *= -1;
-  }
+  // uppdatera 3D bil
+  car.position.copy(carBody.pos);
+  car.rotation.y = carBody.heading;
 
-  // AI rörelse med lite slump för att inte vara perfekt
-  let aiCenter = ai.y + ai.height/2;
-  let offset = Math.random() * 20 - 10; // +-10px slump
-  if(ball.y < aiCenter + offset) ai.y -= aiSpeed;
-  else ai.y += aiSpeed;
-  ai.y = Math.max(0, Math.min(canvas.height - ai.height, ai.y));
+  // kamera följer bakom
+  const camOff = new THREE.Vector3(0, 4.0, 8 + Math.min(6, 10/(carBody.vel.length()+0.01)));
+  const rotM = new THREE.Matrix4().makeRotationY(carBody.heading);
+  camOff.applyMatrix4(rotM);
+  camTarget.position.copy(car.position);
+  const goal = camTarget.position.clone().add(camOff);
+  camera.position.lerp(goal, 0.085);
+  camera.lookAt(car.position.x, car.position.y+1.0, car.position.z);
+}
 
-  // Krock med hinder
-  obstacles.forEach((o,i)=>{
-    if(ball.x+ball.radius>o.x && ball.x-ball.radius<o.x+o.width &&
-       ball.y+ball.radius>o.y && ball.y-ball.radius<o.y+o.height){
-      ball.speedX*=-1;
-      obstacles.splice(i,1); // Hindret försvinner
+function aabbHit(pos, mesh){
+  // approximera bilen som en liten låda
+  const half = {x:1.1, z:2.0};
+  const minA = {x:pos.x-half.x, z:pos.z-half.z};
+  const maxA = {x:pos.x+half.x, z:pos.z+half.z};
+  mesh.geometry.computeBoundingBox();
+  const bb = mesh.geometry.boundingBox.clone();
+  bb.applyMatrix4(mesh.matrixWorld);
+  const minB = bb.min, maxB = bb.max;
+  return (minA.x <= maxB.x && maxA.x >= minB.x && minA.z <= maxB.z && maxA.z >= minB.z);
+}
+
+/* =========================
+   COINS + SCORING
+========================= */
+function collectCoins(){
+  if(!world) return;
+  for(let i=world.coins.length-1; i>=0; i--){
+    const c = world.coins[i];
+    c.rotation.z += 0.05;
+    const d = c.position.distanceTo(car.position);
+    if(d < 1.8){
+      scene.remove(c);
+      world.coins.splice(i,1);
+      addMoney(25);
+      pulseInfo("+25 💰");
     }
+  }
+}
+function addMoney(m){
+  if(testMode) return; // testkör ger inte pengar
+  SAVE.money += m;
+  commit();
+}
+function pulseInfo(txt){
+  const el = document.getElementById('info');
+  el.textContent = txt;
+  el.style.opacity = "1";
+  el.animate([{opacity:1},{opacity:.1}], {duration:1200, fill:"forwards"});
+}
+
+/* =========================
+   HUD / DRIFT
+========================= */
+function updateHUD(dt){
+  const speed = carBody?.vel.length() || 0;
+  document.getElementById('speed').textContent = Math.round(speed*3.6); // ~km/h
+
+  // drift: beräkna slip-vinkel (lateral vs longitudinell)
+  const fwd = new THREE.Vector3(Math.sin(carBody.heading),0,Math.cos(carBody.heading)*-1);
+  const vF = Math.max(0, carBody.vel.dot(fwd));
+  const right = new THREE.Vector3(fwd.z,0,-fwd.x);
+  const vR = Math.abs(carBody.vel.dot(right));
+  const slip = (vF>0.5) ? Math.min(1, vR/(vF+0.0001)) : 0;
+
+  // bara räkna drift när handbroms eller hög slip
+  if(slip>0.25 || input.handbrake){
+    driftChain += (5 + vF) * slip * dt; // poäng byggs upp
+    document.getElementById('drift').textContent = Math.floor(driftChain*10);
+  } else if(driftChain>0){
+    // bank drift-poäng -> pengar
+    const bank = Math.floor(driftChain*10);
+    if(bank>0){ addMoney(bank); pulseInfo(`Drift Bank +${bank} 💰`); }
+    driftScore += bank;
+    driftChain = 0;
+    document.getElementById('drift').textContent = 0;
+  }
+}
+
+/* =========================
+   INPUT
+========================= */
+const keyMap = {
+  "KeyW":"gas","ArrowUp":"gas",
+  "KeyS":"brake","ArrowDown":"brake",
+  "KeyA":"left","ArrowLeft":"left",
+  "KeyD":"right","ArrowRight":"right",
+  "Space":"handbrake",
+  "ShiftLeft":"nitro","ShiftRight":"nitro"
+};
+window.addEventListener('keydown', (e)=>{
+  if(e.code==="KeyP"||e.code==="Escape"){ togglePause(); return; }
+  if(e.code==="KeyR"){ carBody.pos.set(0,0,0); carBody.vel.set(0,0,0); pulseInfo("Reset"); }
+  const k = keyMap[e.code]; if(k) input[k]=true;
+});
+window.addEventListener('keyup', (e)=>{
+  const k = keyMap[e.code]; if(k) input[k]=false;
+});
+
+/* mobilknappar */
+function bindHold(btn, prop){
+  let t; const down=()=>{ input[prop]=true; }; const up=()=>{ input[prop]=false; };
+  btn.addEventListener('touchstart', e=>{e.preventDefault();down();}, {passive:false});
+  btn.addEventListener('touchend', e=>{e.preventDefault();up();}, {passive:false});
+  btn.addEventListener('mousedown', e=>{e.preventDefault();down();});
+  btn.addEventListener('mouseup', e=>{e.preventDefault();up();});
+  btn.addEventListener('mouseleave', up);
+}
+bindHold(document.getElementById('leftBtn'),'left');
+bindHold(document.getElementById('rightBtn'),'right');
+bindHold(document.getElementById('gasBtn'),'gas');
+bindHold(document.getElementById('brakeBtn'),'brake');
+bindHold(document.getElementById('driftBtn'),'handbrake');
+bindHold(document.getElementById('nitroBtn'),'nitro');
+
+/* =========================
+   PAUSE / MENU
+========================= */
+function togglePause(){
+  if(!running) return;
+  paused = !paused;
+  pauseUI.style.display = paused ? "flex" : "none";
+  if(paused) clock.stop(); else clock.start();
+}
+document.getElementById('resumeBtn').onclick = ()=>togglePause();
+document.getElementById('restartBtn').onclick = ()=>{ stopGame(false); startGame({mapId:SAVE.map}); };
+document.getElementById('exitBtn').onclick = ()=>{ stopGame(true); };
+
+/* =========================
+   MENY HANDLERS
+========================= */
+document.getElementById('playBtn').onclick = ()=> startGame({mapId:SAVE.map});
+document.getElementById('mapBtn').onclick = ()=>{
+  menu.style.display="none"; mapSelect.style.display="flex"; renderMapList();
+};
+document.getElementById('garageBtn').onclick = ()=>{
+  menu.style.display="none"; garage.style.display="flex"; renderGarage();
+};
+document.getElementById('backFromGarage').onclick = ()=>{ garage.style.display="none"; menu.style.display="flex"; };
+document.getElementById('backFromMap').onclick = ()=>{ mapSelect.style.display="none"; menu.style.display="flex"; };
+document.getElementById('testDrive').onclick = ()=>{ garage.style.display="none"; startGame({mapId:SAVE.map, isTest:true}); };
+
+function renderMapList(){
+  const wrap = document.getElementById('mapList'); wrap.innerHTML="";
+  maps.forEach(m=>{
+    const owned = SAVE.unlockedMaps.includes(m.id);
+    const btn = document.createElement('button');
+    btn.textContent = owned ? `Spela: ${m.name}` : `Lås upp ${m.name} (${m.price}💰)`;
+    btn.onclick = ()=>{
+      if(owned){ SAVE.map=m.id; commit(); startGame({mapId:m.id}); }
+      else {
+        if(SAVE.money>=m.price){
+          SAVE.money -= m.price;
+          SAVE.unlockedMaps.push(m.id);
+          SAVE.map = m.id; commit(); renderMapList(); updateMoneyUI();
+        } else {
+          alert("Inte tillräckligt med pengar.");
+        }
+      }
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderGarage(){
+  document.getElementById('moneyGarage').textContent = SAVE.money;
+
+  const upgrades = document.getElementById('upgrades');
+  upgrades.innerHTML="";
+  const ups = [
+    {key:"engine", name:"Motor", desc:"+ Acceleration & toppfart", price: lvl=> 200 + lvl*200, max:5},
+    {key:"tires", name:"Däck", desc:"+ Grepp (bättre driftkontroll)", price: lvl=> 150 + lvl*150, max:5}
+  ];
+  ups.forEach(u=>{
+    const lvl = SAVE.upgrades[u.key];
+    const div = document.createElement('div');
+    const price = u.price(lvl);
+    div.className="row"; div.style.alignItems="center";
+    div.innerHTML = `
+      <div class="tile" style="flex:2">
+        <b>${u.name}</b> (nivå ${lvl}/${u.max})<br/>
+        <span class="label">${u.desc}</span>
+      </div>
+      <button ${lvl>=u.max?"disabled":""}>
+        ${lvl>=u.max ? "Maxad" : `Köp (${price}💰)`}
+      </button>
+    `;
+    const btn = div.querySelector('button');
+    btn.onclick = ()=>{
+      if(lvl>=u.max) return;
+      if(SAVE.money>=price){
+        SAVE.money -= price;
+        SAVE.upgrades[u.key] = lvl+1;
+        commit(); renderGarage();
+      }else alert("För lite pengar.");
+    };
+    upgrades.appendChild(div);
   });
 
-  // Miss – spelaren förlorar liv
-  if(ball.x - ball.radius < 0) {
-    lives--;
-    if(lives <= 0){ gameOver(); return; }
-    else{ resetBall(); }
-  }
-
-  // AI missar
-  if(ball.x + ball.radius > canvas.width) { score++; resetBall(); }
-
-  requestAnimationFrame(gameLoop);
+  const skins = document.getElementById('skins');
+  skins.innerHTML="";
+  colors.forEach(c=>{
+    const b = document.createElement('button');
+    b.textContent = c.name;
+    b.style.border = (SAVE.skin===c.id) ? "2px solid var(--accent)" : "1px solid #324569";
+    b.onclick = ()=>{ SAVE.skin=c.id; commit(); renderGarage(); };
+    skins.appendChild(b);
+  });
 }
 
-// Muskontroll
-canvas.addEventListener("mousemove", e=>{
-  let rect = canvas.getBoundingClientRect();
-  targetY = e.clientY - rect.top - player.height/2;
-});
+/* =========================
+   MAP BUILD AFTER start
+========================= */
+function afterBuild(){
+  // not used – kept if you want post-build hooks
+}
 
-// Tangentbord
-document.addEventListener("keydown", e=>{ if(e.key==="ArrowUp") keyUp=true; if(e.key==="ArrowDown") keyDown=true; });
-document.addEventListener("keyup", e=>{ if(e.key==="ArrowUp") keyUp=false; if(e.key==="ArrowDown") keyDown=false; });
-
-// Touch
-canvas.addEventListener("touchmove", e=>{
-  let rect = canvas.getBoundingClientRect();
-  let touchY = e.touches[0].clientY - rect.top;
-  targetY = touchY - player.height/2;
-});
-
-goHome();
+/* =========================
+   INIT ON LOAD
+========================= */
+(function init(){
+  updateMoneyUI();
+  // Bygg renderer once so menus scale nicely (optional)
+  buildRenderer();
+})();
 </script>
 </body>
 </html>
