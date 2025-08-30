@@ -21,6 +21,7 @@
       margin: 20px auto;
       border: 4px solid #ecf0f1;
       border-radius: 10px;
+      touch-action: none; /* Viktigt för mobilstyrning */
     }
     #menu, #gameOverScreen {
       display: none;
@@ -51,7 +52,7 @@
 
 <div id="menu">
   <h2>Välkommen!</h2>
-  <p>Flytta din racket med musen. Missa inte bollen!</p>
+  <p>Flytta racketen med mus, piltangenter eller finger på mobilen.</p>
   <button onclick="startGame()">Starta spelet</button>
 </div>
 
@@ -70,6 +71,9 @@
   let ai = { x: canvas.width - 30, y: canvas.height/2 - 40, width: 10, height: 80 };
   let ball, score, lives, speed, aiSpeed;
   let playing = false;
+
+  let targetY = player.y;
+  let keyUp = false, keyDown = false;
 
   function resetBall() {
     ball = { 
@@ -105,6 +109,17 @@
     document.getElementById("gameOverScreen").style.display = "block";
   }
 
+  function updatePlayer() {
+    if (keyUp) targetY -= 6;
+    if (keyDown) targetY += 6;
+
+    // Mjuk rörelse mot targetY
+    player.y += (targetY - player.y) * 0.2;
+
+    // Begränsa inom planen
+    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+  }
+
   function gameLoop() {
     if (!playing) return;
 
@@ -123,6 +138,8 @@
     ctx.fillText("Poäng: " + score, 20, 20);
     ctx.fillText("Liv: " + lives, 20, 40);
 
+    updatePlayer();
+
     // Bollrörelse
     ball.x += ball.speedX;
     ball.y += ball.speedY;
@@ -138,7 +155,7 @@
         ball.y < player.y + player.height) {
       ball.speedX *= -1;
       score++;
-      if (score % 5 === 0) { speed += 0.5; aiSpeed += 0.3; } // gör svårare
+      if (score % 5 === 0) { speed += 0.5; aiSpeed += 0.3; }
     }
 
     // Krock med AI
@@ -173,11 +190,27 @@
     requestAnimationFrame(gameLoop);
   }
 
-  // Spelarkontroll med mus
+  // Muskontroll (dator)
   canvas.addEventListener("mousemove", e => {
     let rect = canvas.getBoundingClientRect();
-    player.y = e.clientY - rect.top - player.height/2;
-    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+    targetY = e.clientY - rect.top - player.height/2;
+  });
+
+  // Tangentbordskontroll
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") keyUp = true;
+    if (e.key === "ArrowDown") keyDown = true;
+  });
+  document.addEventListener("keyup", e => {
+    if (e.key === "ArrowUp") keyUp = false;
+    if (e.key === "ArrowDown") keyDown = false;
+  });
+
+  // Touchkontroll (mobil)
+  canvas.addEventListener("touchmove", e => {
+    let rect = canvas.getBoundingClientRect();
+    let touchY = e.touches[0].clientY - rect.top;
+    targetY = touchY - player.height/2;
   });
 
   // Visa startsida först
