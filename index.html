@@ -1,116 +1,125 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <title>Ditt UF-företag</title>
-  <style>
-    /* Grundinställningar */
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('minbild.png') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-    }
+<meta charset="UTF-8">
+<title>Ditt UF-företag</title>
+<style>
+  /* Grundinställningar */
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+  body, html {
+    height: 100%;
+    color: white;
+    background: url('minbild.png') no-repeat center center fixed;
+    background-size: cover;
+  }
 
-    /* Header */
-    header {
-      background: rgba(44, 62, 80, 0.7);
-      padding: 20px;
-      text-align: center;
-    }
+  /* Header och meny */
+  header {
+    width: 100%;
+    padding: 30px 20px;
+    text-align: center;
+    background: rgba(0,0,0,0.4);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+  header h1 { font-size: 36px; margin-bottom: 5px; }
+  header p { font-size: 18px; color: #ddd; }
 
-    /* Meny */
-    nav {
-      background: rgba(52, 73, 94, 0.8);
-      display: flex;
-      justify-content: center;
-    }
-    nav a {
-      color: white;
-      padding: 14px 20px;
-      text-decoration: none;
-      display: block;
-      transition: background 0.3s;
-    }
-    nav a:hover {
-      background: rgba(26, 188, 156, 0.8);
-    }
+  nav {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+    padding: 12px 25px;
+    margin: 0 10px;
+    border-radius: 6px;
+    transition: 0.3s;
+    font-weight: bold;
+  }
+  nav a:hover {
+    background: rgba(26, 188, 156, 0.8);
+  }
 
-    /* Sektioner */
-    section {
-      display: none;
-      padding: 60px 20px;
-      text-align: center;
-      background: rgba(0, 0, 0, 0.5); /* gör texten lättare att läsa över bakgrund */
-      margin: 40px;
-      border-radius: 10px;
-    }
-    section.active { display: block; }
+  /* Sektioner */
+  section {
+    display: none;
+    min-height: 100vh;
+    padding: 150px 20px 60px 20px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.4);
+    transition: opacity 0.5s ease;
+  }
+  section.active { display: block; }
 
-    /* Footer */
-    footer {
-      background: rgba(44, 62, 80, 0.7);
-      color: white;
-      text-align: center;
-      padding: 15px;
-      margin-top: 40px;
-    }
+  section h2 { font-size: 48px; margin-bottom: 20px; }
+  section p { font-size: 22px; line-height: 1.6; }
 
-    /* Bilder i sektioner */
-    img {
-      max-width: 90%;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
-  </style>
+  img {
+    max-width: 80%;
+    border-radius: 12px;
+    margin-top: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    font-size: 16px;
+    position: relative;
+  }
+</style>
 </head>
 <body>
 
 <header>
-  <h1>Välkommen till Ditt UF-företag</h1>
-  <p>En kort slogan eller tagline här</p>
+  <h1>Välkommen </h1>
+  <nav>
+    <a href="#" onclick="showPage('hem')">Hem</a>
+    <a href="#" onclick="showPage('om')">Om oss</a>
+    <a href="#" onclick="showPage('produkter')">Produkter</a>
+    <a href="#" onclick="showPage('kontakt')">Kontakt</a>
+  </nav>
 </header>
-
-<nav>
-  <a href="#" onclick="showPage('hem')">Hem</a>
-  <a href="#" onclick="showPage('om')">Om oss</a>
-  <a href="#" onclick="showPage('produkter')">Produkter</a>
-  <a href="#" onclick="showPage('kontakt')">Kontakt</a>
-</nav>
 
 <section id="hem" class="active">
   <h2>Hem</h2>
-  <p>Välkommen till vår hemsida! Här kan du läsa mer om vårt företag och våra produkter.</p>
-  <img src="landskap.jpg" alt="Landskapsbild">
+  <p>Välkommen till vår hemsida</p>
+  <img src="landskap.jpg" alt="Exempelbild">
 </section>
 
 <section id="om">
   <h2>Om oss</h2>
-  <p>Vi är ett UF-företag som startades 2025. Här kan du berätta mer om er idé och ert team.</p>
 </section>
 
 <section id="produkter">
   <h2>Våra produkter</h2>
-  <p>Beskriv era produkter här. Lägg till bilder om ni vill.</p>
 </section>
 
 <section id="kontakt">
   <h2>Kontakta oss</h2>
-  <p>Mail: exempel@uf.se</p>
-  <p>Instagram: @dittuf</p>
+  <p>Mail:</p>
+  <p>Instagram:</p>
 </section>
 
 <footer>
-  <p>© 2025 Ditt UF-företag</p>
+  © 2025 
 </footer>
 
 <script>
   function showPage(id) {
-    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
   }
 </script>
 
 </body>
 </html>
+
