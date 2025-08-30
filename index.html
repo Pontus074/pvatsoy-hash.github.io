@@ -2,29 +2,220 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Spelcentral 🎮</title>
+  <title>Pingis mot AI 🏓</title>
   <style>
-    body { margin:0; font-family:Arial, sans-serif; background:#1e272e; color:white; text-align:center; }
-    header { padding:30px; background:#0f1417; }
-    h1 { margin:0; }
-    .menu { margin-top:50px; }
-    .menu a {
-      display:inline-block; margin:15px; padding:15px 30px;
-      background:#1abc9c; color:white; text-decoration:none; font-size:20px;
-      border-radius:8px; transition:0.2s;
+    body {
+      margin: 0; 
+      font-family: Arial, sans-serif;
+      background: #222; 
+      color: white; 
+      text-align: center;
     }
-    .menu a:hover { background:#16a085; }
+    header {
+      background: #111;
+      padding: 15px;
+    }
+    #gameCanvas {
+      background: #2c3e50;
+      display: block;
+      margin: 20px auto;
+      border: 4px solid #ecf0f1;
+      border-radius: 10px;
+      touch-action: none; /* Viktigt för mobilstyrning */
+    }
+    #menu, #gameOverScreen {
+      display: none;
+      margin-top: 30px;
+    }
+    button {
+      background: #1abc9c;
+      border: none;
+      padding: 12px 25px;
+      margin: 10px;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #16a085;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🎮 Spelcentral 🎮</h1>
-    <p>Välj ett spel nedan!</p>
-  </header>
 
-  <div class="menu">
-    <a href="pingis.html">🏓 Pingis</a>
-    <a href="snake.html">🐍 Snake</a>
-  </div>
+<header>
+  <h1>🏓 Pingis mot AI 🏓</h1>
+</header>
+
+<canvas id="gameCanvas" width="700" height="400"></canvas>
+
+<div id="menu">
+  <h2>Välkommen!</h2>
+  <p>Flytta racketen med mus, piltangenter eller finger på mobilen.</p>
+  <button onclick="startGame()">Starta spelet</button>
+</div>
+
+<div id="gameOverScreen">
+  <h2>Game Over!</h2>
+  <p id="finalScore"></p>
+  <button onclick="startGame()">Starta om</button>
+  <button onclick="goHome()">Till start</button>
+</div>
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  let player = { x: 20, y: canvas.height/2 - 40, width: 10, height: 80 };
+  let ai = { x: canvas.width - 30, y: canvas.height/2 - 40, width: 10, height: 80 };
+  let ball, score, lives, speed, aiSpeed;
+  let playing = false;
+
+  let targetY = player.y;
+  let keyUp = false, keyDown = false;
+
+  function resetBall() {
+    ball = { 
+      x: canvas.width/2, 
+      y: canvas.height/2, 
+      radius: 8, 
+      speedX: speed * (Math.random() > 0.5 ? 1 : -1), 
+      speedY: speed * (Math.random() > 0.5 ? 1 : -1)
+    };
+  }
+
+  function startGame() {
+    score = 0;
+    lives = 3;
+    speed = 4;
+    aiSpeed = 3;
+    playing = true;
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("gameOverScreen").style.display = "none";
+    resetBall();
+    gameLoop();
+  }
+
+  function goHome() {
+    document.getElementById("menu").style.display = "block";
+    document.getElementById("gameOverScreen").style.display = "none";
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+
+  function gameOver() {
+    playing = false;
+    document.getElementById("finalScore").textContent = "Din poäng: " + score;
+    document.getElementById("gameOverScreen").style.display = "block";
+  }
+
+  function updatePlayer() {
+    if (keyUp) targetY -= 6;
+    if (keyDown) targetY += 6;
+
+    // Mjuk rörelse mot targetY
+    player.y += (targetY - player.y) * 0.2;
+
+    // Begränsa inom planen
+    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+  }
+
+  function gameLoop() {
+    if (!playing) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Rita spelplan
+    ctx.fillStyle = "white";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+    ctx.fill();
+
+    // Text
+    ctx.font = "16px Arial";
+    ctx.fillText("Poäng: " + score, 20, 20);
+    ctx.fillText("Liv: " + lives, 20, 40);
+
+    updatePlayer();
+
+    // Bollrörelse
+    ball.x += ball.speedX;
+    ball.y += ball.speedY;
+
+    // Studsa på topp & botten
+    if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+      ball.speedY *= -1;
+    }
+
+    // Krock med spelaren
+    if (ball.x - ball.radius < player.x + player.width &&
+        ball.y > player.y &&
+        ball.y < player.y + player.height) {
+      ball.speedX *= -1;
+      score++;
+      if (score % 5 === 0) { speed += 0.5; aiSpeed += 0.3; }
+    }
+
+    // Krock med AI
+    if (ball.x + ball.radius > ai.x &&
+        ball.y > ai.y &&
+        ball.y < ai.y + ai.height) {
+      ball.speedX *= -1;
+    }
+
+    // AI rörelse
+    if (ball.y < ai.y + ai.height/2) ai.y -= aiSpeed;
+    else ai.y += aiSpeed;
+    ai.y = Math.max(0, Math.min(canvas.height - ai.height, ai.y));
+
+    // Miss – spelaren förlorar liv
+    if (ball.x - ball.radius < 0) {
+      lives--;
+      if (lives <= 0) {
+        gameOver();
+        return;
+      } else {
+        resetBall();
+      }
+    }
+
+    // AI missar (extra poäng)
+    if (ball.x + ball.radius > canvas.width) {
+      score++;
+      resetBall();
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Muskontroll (dator)
+  canvas.addEventListener("mousemove", e => {
+    let rect = canvas.getBoundingClientRect();
+    targetY = e.clientY - rect.top - player.height/2;
+  });
+
+  // Tangentbordskontroll
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") keyUp = true;
+    if (e.key === "ArrowDown") keyDown = true;
+  });
+  document.addEventListener("keyup", e => {
+    if (e.key === "ArrowUp") keyUp = false;
+    if (e.key === "ArrowDown") keyDown = false;
+  });
+
+  // Touchkontroll (mobil)
+  canvas.addEventListener("touchmove", e => {
+    let rect = canvas.getBoundingClientRect();
+    let touchY = e.touches[0].clientY - rect.top;
+    targetY = touchY - player.height/2;
+  });
+
+  // Visa startsida först
+  goHome();
+</script>
+
 </body>
 </html>
