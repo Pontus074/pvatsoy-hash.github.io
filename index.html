@@ -2,23 +2,26 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Pingis 🏓 - Nivåer & Hinder</title>
+<title>Rymdhopparen 🚀</title>
 <style>
-body {margin:0;font-family:Arial;background:#222;color:white;text-align:center;}
-header{background:#111;padding:15px;}
-#gameCanvas{background:#2c3e50;display:block;margin:20px auto;border:4px solid #ecf0f1;border-radius:10px;touch-action:none;}
-#menu,#gameOverScreen{display:none;margin-top:30px;}
-button{background:#1abc9c;border:none;padding:12px 25px;margin:10px;color:white;font-size:16px;border-radius:5px;cursor:pointer;}
-button:hover{background:#16a085;}
+  body { margin:0; font-family:Arial, sans-serif; background:#000; color:white; text-align:center; overflow:hidden;}
+  canvas { display:block; margin:0 auto; background: radial-gradient(circle at top, #001, #000); border:2px solid #fff; border-radius:10px;}
+  #menu, #gameOverScreen { display:none; margin-top:20px;}
+  button { background:#1abc9c; border:none; padding:12px 25px; margin:10px; color:white; font-size:16px; border-radius:5px; cursor:pointer;}
+  button:hover{background:#16a085;}
 </style>
 </head>
 <body>
-<header><h1>🏓 Pingis 🏓</h1></header>
-<canvas id="gameCanvas" width="700" height="400"></canvas>
+
+<header>
+  <h1>🚀 Rymdhopparen 🚀</h1>
+</header>
+
+<canvas id="gameCanvas" width="700" height="500"></canvas>
 
 <div id="menu">
   <h2>Välkommen!</h2>
-  <p>Flytta racketen med mus, piltangenter eller finger på mobilen.</p>
+  <p>Hoppa mellan asteroider och samla stjärnor. Flytta med piltangenter eller touch!</p>
   <button onclick="startGame()">Starta spelet</button>
 </div>
 
@@ -33,36 +36,32 @@ button:hover{background:#16a085;}
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let player = {x:20,y:canvas.height/2-40,width:10,height:80};
-let ai = {x:canvas.width-30,y:canvas.height/2-40,width:10,height:80};
-let ball, score, lives, level, speed, aiSpeed, nextLevelScore;
+let player = {x:100, y:canvas.height/2, width:40, height:30, vy:0};
+let gravity = 0.6;
+let jumpPower = -10;
+let asteroids = [];
+let stars = [];
+let score = 0;
 let playing = false;
-let targetY = player.y;
-let keyUp = false, keyDown = false;
-let obstacles = [];
+let speed = 3;
+let level = 1;
+let touchY = null;
 
-function resetBall() {
-  ball = {
-    x: canvas.width/2,
-    y: canvas.height/2,
-    radius: 8,
-    speedX: speed*(Math.random()>0.5?1:-1),
-    speedY: speed*(Math.random()>0.5?1:-1)
-  };
+function resetGame() {
+  player.y = canvas.height/2;
+  player.vy = 0;
+  asteroids = [];
+  stars = [];
+  score = 0;
+  level = 1;
+  speed = 3;
 }
 
 function startGame() {
-  score = 0;
-  lives = 3;
-  level = 1;
-  speed = 3; // lite långsammare i början
-  aiSpeed = 2.5;
-  nextLevelScore = 8;
-  obstacles = [];
+  resetGame();
   playing = true;
   document.getElementById("menu").style.display = "none";
   document.getElementById("gameOverScreen").style.display = "none";
-  resetBall();
   gameLoop();
 }
 
@@ -78,115 +77,90 @@ function gameOver() {
   document.getElementById("gameOverScreen").style.display = "block";
 }
 
-function updatePlayer() {
-  if(keyUp) targetY -= 6;
-  if(keyDown) targetY += 6;
-  player.y += (targetY - player.y) * 0.2;
-  player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+// Skapa asteroider
+function spawnAsteroid() {
+  let height = Math.random()*80+40;
+  let y = Math.random()*(canvas.height-height);
+  asteroids.push({x:canvas.width, y:y, width:60, height:height});
 }
 
-function addObstacles() {
-  obstacles = [];
-  for(let i=0;i<level-1;i++){
-    let obsX = Math.random()*(canvas.width*0.6)+canvas.width*0.2;
-    let obsY = Math.random()*(canvas.height-30);
-    obstacles.push({x:obsX, y:obsY, width:15, height:50});
-  }
+// Skapa stjärnor
+function spawnStar() {
+  let y = Math.random()*(canvas.height-20);
+  stars.push({x:canvas.width, y:y, width:15, height:15});
+}
+
+function updatePlayer() {
+  player.vy += gravity;
+  player.y += player.vy;
+  if(player.y + player.height > canvas.height) { player.y = canvas.height - player.height; player.vy=0; }
+  if(player.y < 0) { player.y=0; player.vy=0; }
 }
 
 function gameLoop() {
   if(!playing) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Rita hinder
-  ctx.fillStyle = "red";
-  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
-
-  // Rita spelplan
-  ctx.fillStyle = "white";
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-  ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.font = "16px Arial";
-  ctx.fillText("Poäng: "+score, 20, 20);
-  ctx.fillText("Liv: "+lives, 20, 40);
-  ctx.fillText("Nivå: "+level, 20, 60);
+  // Bakgrundsstjärnor
+  ctx.fillStyle="white";
+  for(let i=0;i<50;i++){
+    ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2,2);
+  }
 
   updatePlayer();
 
-  // Bollrörelse
-  ball.x += ball.speedX;
-  ball.y += ball.speedY;
+  // Rita spelare
+  ctx.fillStyle="cyan";
+  ctx.fillRect(player.x, player.y, player.width, player.height);
 
-  // Studsa på topp & botten
-  if(ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) ball.speedY *= -1;
-
-  // Spelare-kollision
-  if(ball.x - ball.radius < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) {
-    ball.speedX *= -1;
-    score++;
-    if(score % 5 === 0){ speed += 0.3; aiSpeed += 0.2; }
-
-    // Nivåprogression med tröskel
-    if(score >= nextLevelScore) {
-      level = Math.min(10, level + 1);
-      addObstacles();
-      nextLevelScore += 8;
+  // Hantera asteroider
+  ctx.fillStyle="gray";
+  if(Math.random()<0.02+level*0.003) spawnAsteroid();
+  asteroids.forEach((a,i)=>{
+    a.x -= speed;
+    ctx.fillRect(a.x, a.y, a.width, a.height);
+    // Kollision
+    if(player.x + player.width > a.x && player.x < a.x + a.width && player.y + player.height > a.y && player.y < a.y + a.height){
+      gameOver();
     }
-  }
-
-  // AI-kollision
-  if(ball.x + ball.radius > ai.x && ball.y > ai.y && ball.y < ai.y + ai.height) {
-    ball.speedX *= -1;
-  }
-
-  // AI rörelse med lite slump för att inte vara perfekt
-  let aiCenter = ai.y + ai.height/2;
-  let offset = Math.random() * 20 - 10; // +-10px slump
-  if(ball.y < aiCenter + offset) ai.y -= aiSpeed;
-  else ai.y += aiSpeed;
-  ai.y = Math.max(0, Math.min(canvas.height - ai.height, ai.y));
-
-  // Krock med hinder
-  obstacles.forEach((o,i)=>{
-    if(ball.x+ball.radius>o.x && ball.x-ball.radius<o.x+o.width &&
-       ball.y+ball.radius>o.y && ball.y-ball.radius<o.y+o.height){
-      ball.speedX*=-1;
-      obstacles.splice(i,1); // Hindret försvinner
-    }
+    if(a.x + a.width < 0) asteroids.splice(i,1);
   });
 
-  // Miss – spelaren förlorar liv
-  if(ball.x - ball.radius < 0) {
-    lives--;
-    if(lives <= 0){ gameOver(); return; }
-    else{ resetBall(); }
-  }
+  // Hantera stjärnor
+  ctx.fillStyle="yellow";
+  if(Math.random()<0.01) spawnStar();
+  stars.forEach((s,i)=>{
+    s.x -= speed;
+    ctx.fillRect(s.x, s.y, s.width, s.height);
+    if(player.x + player.width > s.x && player.x < s.x + s.width && player.y + player.height > s.y && player.y < s.y + s.height){
+      score++;
+      stars.splice(i,1);
+      if(score % 5 === 0){ speed += 0.5; level++; }
+    }
+    if(s.x + s.width < 0) stars.splice(i,1);
+  });
 
-  // AI missar
-  if(ball.x + ball.radius > canvas.width) { score++; resetBall(); }
+  // Text
+  ctx.fillStyle="white";
+  ctx.font="18px Arial";
+  ctx.fillText("Poäng: "+score, 20,30);
+  ctx.fillText("Nivå: "+level, 20, 50);
 
   requestAnimationFrame(gameLoop);
 }
 
-// Muskontroll
-canvas.addEventListener("mousemove", e=>{
-  let rect = canvas.getBoundingClientRect();
-  targetY = e.clientY - rect.top - player.height/2;
+// Tangentbord
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowUp" || e.key===" ") player.vy = jumpPower;
 });
 
-// Tangentbord
-document.addEventListener("keydown", e=>{ if(e.key==="ArrowUp") keyUp=true; if(e.key==="ArrowDown") keyDown=true; });
-document.addEventListener("keyup", e=>{ if(e.key==="ArrowUp") keyUp=false; if(e.key==="ArrowDown") keyDown=false; });
-
 // Touch
+canvas.addEventListener("touchstart", e=>{
+  e.preventDefault();
+  player.vy = jumpPower;
+});
 canvas.addEventListener("touchmove", e=>{
-  let rect = canvas.getBoundingClientRect();
-  let touchY = e.touches[0].clientY - rect.top;
-  targetY = touchY - player.height/2;
+  touchY = e.touches[0].clientY;
 });
 
 goHome();
