@@ -2,96 +2,186 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Klickspelet 🎮</title>
+  <title>Pingis mot AI 🏓</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; text-align:center; }
-    header { background:#2c3e50; color:white; padding:20px; }
-    nav { background:#34495e; padding:15px; }
-    nav button { margin:5px; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; color:white; }
-    nav button:hover { opacity:0.8; }
-    .easy { background:#27ae60; }
-    .medium { background:#f39c12; }
-    .hard { background:#c0392b; }
-    section { display:none; padding:40px; }
-    section.active { display:block; }
-    #gameArea { position:relative; width:80%; height:400px; margin:20px auto; background:white; border:2px solid #ccc; border-radius:10px; }
-    .target { position:absolute; width:50px; height:50px; background:#1abc9c; border-radius:50%; cursor:pointer; }
-    footer { background:#2c3e50; color:white; padding:15px; margin-top:30px; }
+    body {
+      margin: 0; 
+      font-family: Arial, sans-serif;
+      background: #222; 
+      color: white; 
+      text-align: center;
+    }
+    header {
+      background: #111;
+      padding: 15px;
+    }
+    #gameCanvas {
+      background: #2c3e50;
+      display: block;
+      margin: 20px auto;
+      border: 4px solid #ecf0f1;
+      border-radius: 10px;
+    }
+    #menu, #gameOverScreen {
+      display: none;
+      margin-top: 30px;
+    }
+    button {
+      background: #1abc9c;
+      border: none;
+      padding: 12px 25px;
+      margin: 10px;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #16a085;
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🎮 Välkommen till Klickspelet 🎮</h1>
-  <p>Välj svårighetsgrad och testa hur många poäng du kan få!</p>
+  <h1>🏓 Pingis mot AI 🏓</h1>
 </header>
 
-<nav>
-  <button onclick="showPage('home')" class="easy">Hem</button>
-  <button onclick="showPage('play')" class="medium">Spela</button>
-  <button onclick="showPage('rules')" class="hard">Regler</button>
-</nav>
+<canvas id="gameCanvas" width="700" height="400"></canvas>
 
-<section id="home" class="active">
-  <h2>Hem</h2>
-  <p>Klicka på "Spela" i menyn för att börja spelet. 🎯</p>
-</section>
+<div id="menu">
+  <h2>Välkommen!</h2>
+  <p>Flytta din racket med musen. Missa inte bollen!</p>
+  <button onclick="startGame()">Starta spelet</button>
+</div>
 
-<section id="play">
-  <h2>Välj svårighetsgrad:</h2>
-  <button class="easy" onclick="startGame(1200)">Lätt</button>
-  <button class="medium" onclick="startGame(800)">Medium</button>
-  <button class="hard" onclick="startGame(400)">Svårt</button>
-  
-  <div id="gameArea"></div>
-  <h3 id="score">Poäng: 0</h3>
-</section>
-
-<section id="rules">
-  <h2>Regler</h2>
-  <p>Klicka på cirkeln så många gånger du kan innan den flyttar sig.</p>
-  <p>Ju svårare läge, desto snabbare rör sig cirkeln.</p>
-</section>
-
-<footer>
-  <p>© 2025 Klickspelet UF</p>
-</footer>
+<div id="gameOverScreen">
+  <h2>Game Over!</h2>
+  <p id="finalScore"></p>
+  <button onclick="startGame()">Starta om</button>
+  <button onclick="goHome()">Till start</button>
+</div>
 
 <script>
-  function showPage(id) {
-    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-  }
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
 
-  let score = 0;
-  let moveInterval;
-  
-  function startGame(speed) {
-    score = 0;
-    document.getElementById("score").textContent = "Poäng: 0";
-    let area = document.getElementById("gameArea");
-    area.innerHTML = "";
-    
-    let target = document.createElement("div");
-    target.className = "target";
-    area.appendChild(target);
+  let player = { x: 20, y: canvas.height/2 - 40, width: 10, height: 80 };
+  let ai = { x: canvas.width - 30, y: canvas.height/2 - 40, width: 10, height: 80 };
+  let ball, score, lives, speed, aiSpeed;
+  let playing = false;
 
-    target.onclick = function() {
-      score++;
-      document.getElementById("score").textContent = "Poäng: " + score;
+  function resetBall() {
+    ball = { 
+      x: canvas.width/2, 
+      y: canvas.height/2, 
+      radius: 8, 
+      speedX: speed * (Math.random() > 0.5 ? 1 : -1), 
+      speedY: speed * (Math.random() > 0.5 ? 1 : -1)
     };
-
-    function moveTarget() {
-      let x = Math.random() * (area.clientWidth - 50);
-      let y = Math.random() * (area.clientHeight - 50);
-      target.style.left = x + "px";
-      target.style.top = y + "px";
-    }
-    
-    clearInterval(moveInterval);
-    moveInterval = setInterval(moveTarget, speed);
-    moveTarget();
   }
+
+  function startGame() {
+    score = 0;
+    lives = 3;
+    speed = 4;
+    aiSpeed = 3;
+    playing = true;
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("gameOverScreen").style.display = "none";
+    resetBall();
+    gameLoop();
+  }
+
+  function goHome() {
+    document.getElementById("menu").style.display = "block";
+    document.getElementById("gameOverScreen").style.display = "none";
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+
+  function gameOver() {
+    playing = false;
+    document.getElementById("finalScore").textContent = "Din poäng: " + score;
+    document.getElementById("gameOverScreen").style.display = "block";
+  }
+
+  function gameLoop() {
+    if (!playing) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Rita spelplan
+    ctx.fillStyle = "white";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+    ctx.fill();
+
+    // Text
+    ctx.font = "16px Arial";
+    ctx.fillText("Poäng: " + score, 20, 20);
+    ctx.fillText("Liv: " + lives, 20, 40);
+
+    // Bollrörelse
+    ball.x += ball.speedX;
+    ball.y += ball.speedY;
+
+    // Studsa på topp & botten
+    if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+      ball.speedY *= -1;
+    }
+
+    // Krock med spelaren
+    if (ball.x - ball.radius < player.x + player.width &&
+        ball.y > player.y &&
+        ball.y < player.y + player.height) {
+      ball.speedX *= -1;
+      score++;
+      if (score % 5 === 0) { speed += 0.5; aiSpeed += 0.3; } // gör svårare
+    }
+
+    // Krock med AI
+    if (ball.x + ball.radius > ai.x &&
+        ball.y > ai.y &&
+        ball.y < ai.y + ai.height) {
+      ball.speedX *= -1;
+    }
+
+    // AI rörelse
+    if (ball.y < ai.y + ai.height/2) ai.y -= aiSpeed;
+    else ai.y += aiSpeed;
+    ai.y = Math.max(0, Math.min(canvas.height - ai.height, ai.y));
+
+    // Miss – spelaren förlorar liv
+    if (ball.x - ball.radius < 0) {
+      lives--;
+      if (lives <= 0) {
+        gameOver();
+        return;
+      } else {
+        resetBall();
+      }
+    }
+
+    // AI missar (extra poäng)
+    if (ball.x + ball.radius > canvas.width) {
+      score++;
+      resetBall();
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Spelarkontroll med mus
+  canvas.addEventListener("mousemove", e => {
+    let rect = canvas.getBoundingClientRect();
+    player.y = e.clientY - rect.top - player.height/2;
+    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+  });
+
+  // Visa startsida först
+  goHome();
 </script>
 
 </body>
