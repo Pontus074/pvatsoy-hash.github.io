@@ -2,116 +2,193 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Överlevnadsön 3D Test</title>
+<title>Överlevnadsön 3D 🌴</title>
 <style>
-body { margin:0; overflow:hidden; }
-canvas { display:block; }
-#hud { position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; }
+  body { margin:0; overflow:hidden; font-family: Arial; background:#87CEEB; }
+  #overlay {
+    position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5);
+    padding:10px; border-radius:5px; font-size:14px;
+  }
 </style>
 </head>
 <body>
-<div id="hud">Hälsa: 100 | Tid: Dag</div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
-
+<div id="overlay">
+  <div>Hunger: <span id="hunger">100</span></div>
+  <div>Stamina: <span id="stamina">100</span></div>
+  <div>Tid: <span id="time">Dag</span></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/PointerLockControls.js"></script>
 <script>
-// Scen och kamera
-let scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // himmelblå
-let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let scene, camera, renderer, controls;
+let clock = new THREE.Clock();
+let objects = [];
+let player = {hunger:100, stamina:100};
+let timeOfDay = 0; // 0-1, 0=dag, 0.5=natt
 
-let renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Mark
-let groundGeo = new THREE.PlaneGeometry(200, 200);
-let groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
-let ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
-
-// Ljus
-let sun = new THREE.DirectionalLight(0xffffff, 1);
-sun.position.set(50,100,50);
-scene.add(sun);
-
-let ambient = new THREE.AmbientLight(0x404040,0.5);
-scene.add(ambient);
-
-// Spelare
-let player = {x:0, y:2, z:0, health:100};
-
-// Träd
-function addTree(x,z){
-    let trunkGeo = new THREE.CylinderGeometry(0.3,0.3,3);
-    let trunkMat = new THREE.MeshPhongMaterial({color:0x8B4513});
-    let trunk = new THREE.Mesh(trunkGeo,trunkMat);
-    trunk.position.set(x,1.5,z);
-    scene.add(trunk);
-
-    let leavesGeo = new THREE.ConeGeometry(1.5,3,8);
-    let leavesMat = new THREE.MeshPhongMaterial({color:0x228B22});
-    let leaves = new THREE.Mesh(leavesGeo,leavesMat);
-    leaves.position.set(x,4.5,z);
-    scene.add(leaves);
-}
-for(let i=0;i<20;i++){
-    addTree(Math.random()*100-50,Math.random()*100-50);
-}
-
-// Tangentbord
-let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
-document.addEventListener('keydown', e=>{
-    if(e.key==='w') moveForward=true;
-    if(e.key==='s') moveBackward=true;
-    if(e.key==='a') moveLeft=true;
-    if(e.key==='d') moveRight=true;
-});
-document.addEventListener('keyup', e=>{
-    if(e.key==='w') moveForward=false;
-    if(e.key==='s') moveBackward=false;
-    if(e.key==='a') moveLeft=false;
-    if(e.key==='d') moveRight=false;
-});
-
-// Spelarrörelse
-function updatePlayer(){
-    let speed=0.2;
-    if(moveForward) player.z -= speed;
-    if(moveBackward) player.z += speed;
-    if(moveLeft) player.x -= speed;
-    if(moveRight) player.x += speed;
-}
-
-// Dag/natt
-let isDay = true;
-let timeCounter = 0;
-
-// Render-loop
-function animate(){
-    requestAnimationFrame(animate);
-    updatePlayer();
-
-    // Kamera följer spelaren
-    camera.position.set(player.x,player.y+1,player.z+5);
-    camera.lookAt(player.x,player.y,player.z);
-
-    // Dag/natt-cykel
-    timeCounter += 0.01;
-    if(timeCounter>20){ isDay = !isDay; timeCounter=0; }
-    sun.intensity = isDay?1:0.2;
-    ambient.intensity = isDay?0.5:0.1;
-    document.getElementById("hud").innerText = `Hälsa: ${player.health} | Tid: ${isDay?'Dag':'Natt'}`;
-
-    renderer.render(scene,camera);
-}
+init();
 animate();
 
-window.addEventListener('resize', ()=>{
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lysning
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambient);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+    sun.position.set(50,100,50);
+    scene.add(sun);
+
+    // Mark
+    const groundGeo = new THREE.PlaneGeometry(100,100,32,32);
+    const groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI/2;
+    scene.add(ground);
+
+    // Träd och buskar
+    for(let i=0;i<20;i++){
+        addTree(Math.random()*80-40, Math.random()*80-40);
+    }
+    for(let i=0;i<10;i++){
+        addBush(Math.random()*80-40, Math.random()*80-40);
+    }
+
+    // En fiende
+    addEnemy(10,10);
+
+    // Djur
+    addAnimal(-10, -10);
+
+    // Kamera och kontroller
+    controls = new THREE.PointerLockControls(camera, document.body);
+    document.body.addEventListener('click', ()=>controls.lock());
+    camera.position.y = 2;
+
+    window.addEventListener('resize', onWindowResize, false);
+    document.addEventListener('keydown', keyDown);
+    document.addEventListener('keyup', keyUp);
+}
+
+let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+
+function keyDown(e){
+    if(e.key==="w") moveForward=true;
+    if(e.key==="s") moveBackward=true;
+    if(e.key==="a") moveLeft=true;
+    if(e.key==="d") moveRight=true;
+}
+function keyUp(e){
+    if(e.key==="w") moveForward=false;
+    if(e.key==="s") moveBackward=false;
+    if(e.key==="a") moveLeft=false;
+    if(e.key==="d") moveRight=false;
+}
+
+function addTree(x,z){
+    const trunkGeo = new THREE.CylinderGeometry(0.3,0.3,2);
+    const trunkMat = new THREE.MeshPhongMaterial({color:0x8B4513});
+    const trunk = new THREE.Mesh(trunkGeo,trunkMat);
+    trunk.position.set(x,1,z);
+    scene.add(trunk);
+
+    const leavesGeo = new THREE.SphereGeometry(1.2,8,8);
+    const leavesMat = new THREE.MeshPhongMaterial({color:0x006400});
+    const leaves = new THREE.Mesh(leavesGeo,leavesMat);
+    leaves.position.set(x,2.5,z);
+    scene.add(leaves);
+}
+
+function addBush(x,z){
+    const bushGeo = new THREE.SphereGeometry(0.8,8,8);
+    const bushMat = new THREE.MeshPhongMaterial({color:0x228B22});
+    const bush = new THREE.Mesh(bushGeo,bushMat);
+    bush.position.set(x,0.4,z);
+    scene.add(bush);
+}
+
+let enemies = [];
+function addEnemy(x,z){
+    const geo = new THREE.BoxGeometry(1,1.5,1);
+    const mat = new THREE.MeshPhongMaterial({color:0xff0000});
+    const enemy = new THREE.Mesh(geo,mat);
+    enemy.position.set(x,0.75,z);
+    scene.add(enemy);
+    enemies.push(enemy);
+}
+
+let animals = [];
+function addAnimal(x,z){
+    const geo = new THREE.BoxGeometry(1,1,1);
+    const mat = new THREE.MeshPhongMaterial({color:0x8B4513});
+    const animal = new THREE.Mesh(geo,mat);
+    animal.position.set(x,0.5,z);
+    scene.add(animal);
+    animals.push(animal);
+}
+
+function onWindowResize(){
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+    let delta = clock.getDelta();
+
+    // Rörelse
+    let speed = 5*delta;
+    let dir = new THREE.Vector3();
+    if(moveForward) dir.z -= speed;
+    if(moveBackward) dir.z += speed;
+    if(moveLeft) dir.x -= speed;
+    if(moveRight) dir.x += speed;
+    controls.moveRight(dir.x);
+    controls.moveForward(dir.z);
+
+    // Simulera tid
+    timeOfDay += delta*0.01;
+    if(timeOfDay>1) timeOfDay=0;
+    document.getElementById("time").textContent = timeOfDay<0.5?"Dag":"Natt";
+
+    // Fiender spawnar på natten
+    if(timeOfDay>=0.5){
+        enemies.forEach(e=>{
+            let dx = controls.getObject().position.x - e.position.x;
+            let dz = controls.getObject().position.z - e.position.z;
+            let dist = Math.sqrt(dx*dx + dz*dz);
+            if(dist>0){
+                e.position.x += dx*delta;
+                e.position.z += dz*delta;
+            }
+        });
+    }
+
+    // Djur rör sig
+    animals.forEach(a=>{
+        a.position.x += (Math.random()-0.5)*delta;
+        a.position.z += (Math.random()-0.5)*delta;
+    });
+
+    // Hunger & stamina
+    player.hunger -= delta*2;
+    player.stamina -= (moveForward||moveBackward||moveLeft||moveRight)? delta*5 : delta*1;
+    player.hunger = Math.max(0, player.hunger);
+    player.stamina = Math.max(0, player.stamina);
+    document.getElementById("hunger").textContent = Math.floor(player.hunger);
+    document.getElementById("stamina").textContent = Math.floor(player.stamina);
+
+    renderer.render(scene, camera);
+}
 </script>
 </body>
 </html>
