@@ -2,82 +2,99 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Min hemsida med flera sidor</title>
+  <title>Min hemsida</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0;
       margin: 0;
       padding: 0;
       text-align: center;
-    }
-    nav {
-      background: #333;
-      padding: 10px;
-    }
-    nav button {
-      background: #555;
+      background: url('minbild.png') no-repeat center center fixed;
+      background-size: cover;
       color: white;
-      border: none;
+    }
+
+    nav {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 1000;
+    }
+
+    nav button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
       padding: 10px 20px;
-      margin: 5px;
       cursor: pointer;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: 0.3s;
     }
+
     nav button:hover {
-      background: #777;
+      background: rgba(255, 255, 255, 0.4);
     }
+
     .page {
       display: none;
-      padding: 40px;
+      padding: 150px 20px 50px 20px; /* mer utrymme för nav */
     }
+
     .active {
       display: block;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    }
+
+    p {
+      font-size: 24px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
     }
   </style>
 </head>
 <body>
   <nav>
-    <button onclick="showPage(1)">Sida 1</button>
-    <button onclick="showPage(2)">Sida 2</button>
-    <button onclick="showPage(3)">Sida 3</button>
-    <button onclick="showPage(4)">Sida 4</button>
-    <button onclick="showPage(5)">Sida 5</button>
+    <button onclick="showPage(1)">Hem</button>
+    <button onclick="showPage(2)">Meny 1</button>
+    <button onclick="showPage(3)">Meny 2</button>
+    <button onclick="showPage(4)">Meny 3</button>
   </nav>
 
   <div id="page1" class="page active">
-    <h1>Sida 1</h1>
-    <p>Detta är texten på första sidan.</p>
+    <h1>Välkommen!</h1>
+    <p>Detta är startsidan. Klicka på menyerna för mer.</p>
   </div>
 
   <div id="page2" class="page">
-    <h1>Sida 2</h1>
-    <p>Här står texten för andra sidan.</p>
+    <h1>Meny 1</h1>
+    <p>Kommer snart!</p>
   </div>
 
   <div id="page3" class="page">
-    <h1>Sida 3</h1>
-    <p>Detta är texten på tredje sidan.</p>
+    <h1>Meny 2</h1>
+    <p>Kommer snart!</p>
   </div>
 
   <div id="page4" class="page">
-    <h1>Sida 4</h1>
-    <p>Detta är texten på fjärde sidan.</p>
-  </div>
-
-  <div id="page5" class="page">
-    <h1>Sida 5</h1>
-    <p>Detta är texten på femte sidan.</p>
+    <h1>Meny 3</h1>
+    <p>Kommer snart!</p>
   </div>
 
   <script>
     function showPage(num) {
-      // Göm alla sidor
       document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-      // Visa vald sida
       document.getElementById("page" + num).classList.add("active");
     }
   </script>
 </body>
 </html>
-
