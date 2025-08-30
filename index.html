@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Överlevnadsön 3D 🏝️</title>
+<title>Överlevnadsön 3D Test</title>
 <style>
 body { margin:0; overflow:hidden; }
 canvas { display:block; }
@@ -10,20 +10,21 @@ canvas { display:block; }
 </style>
 </head>
 <body>
-<div id="hud">Hälsa: 100 | Hunger: 100 | Tid: Dag</div>
+<div id="hud">Hälsa: 100 | Tid: Dag</div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/controls/PointerLockControls.js"></script>
-<script>
-let scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x87ceeb, 10, 200);
 
+<script>
+// Scen och kamera
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb); // himmelblå
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
 let renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Mark
-let groundGeo = new THREE.PlaneGeometry(200, 200, 32, 32);
+let groundGeo = new THREE.PlaneGeometry(200, 200);
 let groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
 let ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI/2;
@@ -34,18 +35,13 @@ let sun = new THREE.DirectionalLight(0xffffff, 1);
 sun.position.set(50,100,50);
 scene.add(sun);
 
-let ambient = new THREE.AmbientLight(0x404040);
+let ambient = new THREE.AmbientLight(0x404040,0.5);
 scene.add(ambient);
 
-// Kamera och kontroller
-let controls = new THREE.PointerLockControls(camera, document.body);
-document.body.addEventListener('click', ()=>controls.lock());
-camera.position.set(0,2,5);
-
 // Spelare
-let player = {health:100, hunger:100, x:0, y:2, z:0};
+let player = {x:0, y:2, z:0, health:100};
 
-// Träd (exempel)
+// Träd
 function addTree(x,z){
     let trunkGeo = new THREE.CylinderGeometry(0.3,0.3,3);
     let trunkMat = new THREE.MeshPhongMaterial({color:0x8B4513});
@@ -63,58 +59,6 @@ for(let i=0;i<20;i++){
     addTree(Math.random()*100-50,Math.random()*100-50);
 }
 
-// Camp (eld)
-let camp = new THREE.PointLight(0xffa500,2,10);
-camp.position.set(0,0.5,0);
-scene.add(camp);
-
-// Fiender
-let enemies = [];
-function spawnEnemy(x,z){
-    let geo = new THREE.SphereGeometry(0.5);
-    let mat = new THREE.MeshPhongMaterial({color:0xff0000});
-    let enemy = new THREE.Mesh(geo,mat);
-    enemy.position.set(x,0.5,z);
-    scene.add(enemy);
-    enemies.push(enemy);
-}
-
-// Dag/Natt-cykel
-let isDay = true;
-let timeCounter = 0;
-
-// Spel-loop
-function animate(){
-    requestAnimationFrame(animate);
-    timeCounter += 0.01;
-    if(timeCounter>20){ isDay = !isDay; timeCounter=0; }
-    sun.intensity = isDay?1:0.2;
-    ambient.intensity = isDay?0.4:0.1;
-    document.getElementById("hud").innerText = `Hälsa: ${Math.floor(player.health)} | Hunger: ${Math.floor(player.hunger)} | Tid: ${isDay?'Dag':'Natt'}`;
-
-    // Fiender spawnar på natten
-    if(!isDay && enemies.length<5){
-        spawnEnemy(Math.random()*50-25, Math.random()*50-25);
-    }
-
-    // Enkel fiende rörelse
-    enemies.forEach(e=>{
-        let dx = player.x - e.position.x;
-        let dz = player.z - e.position.z;
-        let dist = Math.sqrt(dx*dx + dz*dz);
-        if(dist>1){
-            e.position.x += dx/dist*0.02;
-            e.position.z += dz/dist*0.02;
-        }
-    });
-
-    // Kamera följer spelaren
-    camera.position.set(player.x,player.y,player.z);
-
-    renderer.render(scene,camera);
-}
-animate();
-
 // Tangentbord
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
 document.addEventListener('keydown', e=>{
@@ -130,15 +74,44 @@ document.addEventListener('keyup', e=>{
     if(e.key==='d') moveRight=false;
 });
 
-// Enkel spelarrörelse
+// Spelarrörelse
 function updatePlayer(){
-    let speed=0.1;
+    let speed=0.2;
     if(moveForward) player.z -= speed;
     if(moveBackward) player.z += speed;
     if(moveLeft) player.x -= speed;
     if(moveRight) player.x += speed;
 }
-setInterval(updatePlayer,16);
+
+// Dag/natt
+let isDay = true;
+let timeCounter = 0;
+
+// Render-loop
+function animate(){
+    requestAnimationFrame(animate);
+    updatePlayer();
+
+    // Kamera följer spelaren
+    camera.position.set(player.x,player.y+1,player.z+5);
+    camera.lookAt(player.x,player.y,player.z);
+
+    // Dag/natt-cykel
+    timeCounter += 0.01;
+    if(timeCounter>20){ isDay = !isDay; timeCounter=0; }
+    sun.intensity = isDay?1:0.2;
+    ambient.intensity = isDay?0.5:0.1;
+    document.getElementById("hud").innerText = `Hälsa: ${player.health} | Tid: ${isDay?'Dag':'Natt'}`;
+
+    renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 </body>
 </html>
