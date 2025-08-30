@@ -2,115 +2,97 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Min startsida</title>
+  <title>Klickspelet 🎮</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #fff;
-      background: url('minbild.png') no-repeat center center fixed;
-      background-size: cover;
-      text-align: center;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start; /* Menyn längst upp */
-    }
-
-    /* Meny */
-    nav {
-      margin: 20px 0; /* Liten marginal runt menyn */
-      display: flex;
-      justify-content: center;
-      gap: 15px; /* Mellanrum mellan knapparna */
-      flex-wrap: wrap; /* Om fönstret blir litet */
-    }
-
-    nav button {
-      padding: 12px 30px;
-      background: linear-gradient(45deg, #ff7e5f, #feb47b);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      font-size: 16px;
-    }
-
-    nav button:hover {
-      background: linear-gradient(45deg, #feb47b, #ff7e5f);
-      transform: scale(1.05);
-    }
-
-    /* Innehåll */
-    .page {
-      display: none;
-      margin-top: 80px; /* Flyttade texten lite ner från toppen */
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
-    }
-
-    .active {
-      display: block;
-    }
-
-    h1 {
-      font-size: 38px;
-      margin-bottom: 15px;
-    }
-
-    p {
-      font-size: 22px;
-    }
+    body { margin:0; font-family: Arial, sans-serif; background:#ecf0f1; text-align:center; }
+    header { background:#2c3e50; color:white; padding:20px; }
+    nav { background:#34495e; padding:15px; }
+    nav button { margin:5px; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; color:white; }
+    nav button:hover { opacity:0.8; }
+    .easy { background:#27ae60; }
+    .medium { background:#f39c12; }
+    .hard { background:#c0392b; }
+    section { display:none; padding:40px; }
+    section.active { display:block; }
+    #gameArea { position:relative; width:80%; height:400px; margin:20px auto; background:white; border:2px solid #ccc; border-radius:10px; }
+    .target { position:absolute; width:50px; height:50px; background:#1abc9c; border-radius:50%; cursor:pointer; }
+    footer { background:#2c3e50; color:white; padding:15px; margin-top:30px; }
   </style>
 </head>
 <body>
 
-  <!-- Meny -->
-  <nav>
-    <button onclick="showPage('home')">Hem</button>
-    <button onclick="showPage('menu1')">Meny 1</button>
-    <button onclick="showPage('menu2')">Meny 2</button>
-    <button onclick="showPage('menu3')">Meny 3</button>
-    <button onclick="showPage('menu4')">Meny 4</button>
-    <button onclick="showPage('menu5')">Meny 5</button>
-  </nav>
+<header>
+  <h1>🎮 Välkommen till Klickspelet 🎮</h1>
+  <p>Välj svårighetsgrad och testa hur många poäng du kan få!</p>
+</header>
 
-  <!-- Innehåll -->
-  <div id="home" class="page active">
-    <h1>Välkommen till min sida</h1>
-    <p>Klicka på menyerna ovan för att se innehållet.</p>
-  </div>
+<nav>
+  <button onclick="showPage('home')" class="easy">Hem</button>
+  <button onclick="showPage('play')" class="medium">Spela</button>
+  <button onclick="showPage('rules')" class="hard">Regler</button>
+</nav>
 
-  <div id="menu1" class="page">
-    <h1>Kommer snart</h1>
-  </div>
+<section id="home" class="active">
+  <h2>Hem</h2>
+  <p>Klicka på "Spela" i menyn för att börja spelet. 🎯</p>
+</section>
 
-  <div id="menu2" class="page">
-    <h1>Kommer snart</h1>
-  </div>
+<section id="play">
+  <h2>Välj svårighetsgrad:</h2>
+  <button class="easy" onclick="startGame(1200)">Lätt</button>
+  <button class="medium" onclick="startGame(800)">Medium</button>
+  <button class="hard" onclick="startGame(400)">Svårt</button>
+  
+  <div id="gameArea"></div>
+  <h3 id="score">Poäng: 0</h3>
+</section>
 
-  <div id="menu3" class="page">
-    <h1>Kommer snart</h1>
-  </div>
+<section id="rules">
+  <h2>Regler</h2>
+  <p>Klicka på cirkeln så många gånger du kan innan den flyttar sig.</p>
+  <p>Ju svårare läge, desto snabbare rör sig cirkeln.</p>
+</section>
 
-  <div id="menu4" class="page">
-    <h1>Kommer snart</h1>
-  </div>
+<footer>
+  <p>© 2025 Klickspelet UF</p>
+</footer>
 
-  <div id="menu5" class="page">
-    <h1>Kommer snart</h1>
-  </div>
+<script>
+  function showPage(id) {
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
 
-  <script>
-    function showPage(id) {
-      const pages = document.querySelectorAll('.page');
-      pages.forEach(page => page.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+  let score = 0;
+  let moveInterval;
+  
+  function startGame(speed) {
+    score = 0;
+    document.getElementById("score").textContent = "Poäng: 0";
+    let area = document.getElementById("gameArea");
+    area.innerHTML = "";
+    
+    let target = document.createElement("div");
+    target.className = "target";
+    area.appendChild(target);
+
+    target.onclick = function() {
+      score++;
+      document.getElementById("score").textContent = "Poäng: " + score;
+    };
+
+    function moveTarget() {
+      let x = Math.random() * (area.clientWidth - 50);
+      let y = Math.random() * (area.clientHeight - 50);
+      target.style.left = x + "px";
+      target.style.top = y + "px";
     }
-  </script>
+    
+    clearInterval(moveInterval);
+    moveInterval = setInterval(moveTarget, speed);
+    moveTarget();
+  }
+</script>
 
 </body>
 </html>
