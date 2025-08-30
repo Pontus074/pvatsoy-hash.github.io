@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Ditt UF-företag</title>
 <style>
-  /* Grundinställningar */
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
   body, html {
     height: 100%;
@@ -53,18 +52,12 @@
     text-align: center;
     background: rgba(0, 0, 0, 0.4);
     transition: opacity 0.5s ease;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
-  section.active { display: block; }
-
-  section h2 { font-size: 48px; margin-bottom: 20px; }
-  section p { font-size: 22px; line-height: 1.6; }
-
-  img {
-    max-width: 80%;
-    border-radius: 12px;
-    margin-top: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-  }
+  section.active { display: flex; }
 
   /* Footer */
   footer {
@@ -79,7 +72,8 @@
 <body>
 
 <header>
-  <h1>Välkommen </h1>
+  <h1>Välkommen till Ditt UF-företag</h1>
+  <p>Kreativa lösningar för ditt företag</p>
   <nav>
     <a href="#" onclick="showPage('hem')">Hem</a>
     <a href="#" onclick="showPage('om')">Om oss</a>
@@ -89,27 +83,23 @@
 </header>
 
 <section id="hem" class="active">
-  <h2>Hem</h2>
-  <p>Välkommen till vår hemsida</p>
-  <img src="landskap.jpg" alt="Exempelbild">
+  <p>Kommer snart...</p>
 </section>
 
 <section id="om">
-  <h2>Om oss</h2>
+  <p>Kommer snart...</p>
 </section>
 
 <section id="produkter">
-  <h2>Våra produkter</h2>
+  <p>Kommer snart...</p>
 </section>
 
 <section id="kontakt">
-  <h2>Kontakta oss</h2>
-  <p>Mail:</p>
-  <p>Instagram:</p>
+  <p>Kommer snart...</p>
 </section>
 
 <footer>
-  © 2025 
+  © 2025 Ditt UF-företag
 </footer>
 
 <script>
@@ -122,4 +112,3 @@
 
 </body>
 </html>
-
