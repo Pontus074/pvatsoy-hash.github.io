@@ -1,116 +1,38 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-<meta charset="UTF-8">
-<title>Ditt UF-företag</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
-  body, html {
-    height: 100%;
-    color: white;
-    background: url('minbild.png') no-repeat center center fixed;
-    background-size: cover;
-  }
-
-  /* Header och meny */
-  header {
-    width: 100%;
-    padding: 30px 20px;
-    text-align: center;
-    background: rgba(0,0,0,0.4);
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-  }
-  header h1 { font-size: 36px; margin-bottom: 5px; }
-  header p { font-size: 18px; color: #ddd; }
-
-  nav {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-  }
-  nav a {
-    color: white;
-    text-decoration: none;
-    padding: 12px 25px;
-    margin: 0 10px;
-    border-radius: 6px;
-    transition: 0.3s;
-    font-weight: bold;
-  }
-  nav a:hover {
-    background: rgba(26, 188, 156, 0.8);
-  }
-
-  /* Sektioner */
-  section {
-    display: none;
-    min-height: 100vh;
-    padding: 150px 20px 60px 20px;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.4);
-    transition: opacity 0.5s ease;
-    font-size: 28px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  }
-  section.active { display: flex; }
-
-  /* Footer */
-  footer {
-    text-align: center;
-    padding: 20px;
-    background: rgba(0,0,0,0.5);
-    font-size: 16px;
-    position: relative;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Min första hemsida</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      margin: 0;
+      padding: 50px;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      color: #555;
+    }
+    .box {
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+  </style>
 </head>
 <body>
-
-<header>
-  <h1>Välkommen till Ditt UF-företag</h1>
-  <p>Kreativa lösningar för ditt företag</p>
-  <nav>
-    <a href="#" onclick="showPage('hem')">Hem</a>
-    <a href="#" onclick="showPage('om')">Om oss</a>
-    <a href="#" onclick="showPage('produkter')">Produkter</a>
-    <a href="#" onclick="showPage('kontakt')">Kontakt</a>
-  </nav>
-</header>
-
-<section id="hem" class="active">
-  <h2>Välkommen till min sida</h2>
-</section>
-
-<section id="om">
-  <p>1. Kommer snart...</p>
-</section>
-
-<section id="produkter">
-  <p>2. Kommer snart...</p>
-</section>
-
-<section id="kontakt">
-  <p>3. Kommer snart...</p>
-</section>
-
-<footer>
-  © 2025 Ditt UF-företag
-</footer>
-
-<script>
-  function showPage(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    window.scrollTo(0,0);
-  }
-</script>
-
+  <div class="box">
+    <h1>Hej världen! 🌍</h1>
+    <p>Det här är min helt egna gratis hemsida via GitHub Pages.</p>
+  </div>
 </body>
 </html>
+
 
