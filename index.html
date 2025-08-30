@@ -2,188 +2,143 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Överlevnadsön 🏝️</title>
+<title>Överlevnadsön 3D 🏝️</title>
 <style>
-body {margin:0;font-family:Arial;background:#87ceeb;color:white;text-align:center;overflow:hidden;}
-canvas{display:block;margin:0 auto;background:#228B22;}
-#menu,#gameOverScreen{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);padding:20px;border-radius:10px;display:none;}
-button{background:#1abc9c;border:none;padding:12px 25px;margin:10px;color:white;font-size:16px;border-radius:5px;cursor:pointer;}
-button:hover{background:#16a085;}
+body { margin:0; overflow:hidden; }
+canvas { display:block; }
+#hud { position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; }
 </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="500"></canvas>
-
-<div id="menu">
-  <h2>🏝️ Överlevnadsön 🏝️</h2>
-  <p>Rör dig med WASD, piltangenter eller finger/mus.</p>
-  <button onclick="startGame()">Starta spelet</button>
-</div>
-
-<div id="gameOverScreen">
-  <h2>Game Over!</h2>
-  <p id="finalScore"></p>
-  <button onclick="startGame()">Spela igen</button>
-  <button onclick="goHome()">Till start</button>
-</div>
-
+<div id="hud">Hälsa: 100 | Hunger: 100 | Tid: Dag</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/controls/PointerLockControls.js"></script>
 <script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
+let scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x87ceeb, 10, 200);
 
-let player={x:400,y:250,width:30,height:30,health:100,hunger:100};
-let keys={up:false,down:false,left:false,right:false};
-let items=[],enemies=[],score=0,playing=false;
-let spawnInterval,enemyInterval;
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// Spelares hastighet
-const playerSpeed=3;
+// Mark
+let groundGeo = new THREE.PlaneGeometry(200, 200, 32, 32);
+let groundMat = new THREE.MeshPhongMaterial({color:0x228B22});
+let ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
 
-// Starta spelet
-function startGame(){
-    player.x=400; player.y=250; player.health=100; player.hunger=100;
-    items=[]; enemies=[]; score=0;
-    spawnItems();
-    spawnEnemies();
-    playing=true;
-    document.getElementById("menu").style.display="none";
-    document.getElementById("gameOverScreen").style.display="none";
-    gameLoop();
+// Ljus
+let sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(50,100,50);
+scene.add(sun);
+
+let ambient = new THREE.AmbientLight(0x404040);
+scene.add(ambient);
+
+// Kamera och kontroller
+let controls = new THREE.PointerLockControls(camera, document.body);
+document.body.addEventListener('click', ()=>controls.lock());
+camera.position.set(0,2,5);
+
+// Spelare
+let player = {health:100, hunger:100, x:0, y:2, z:0};
+
+// Träd (exempel)
+function addTree(x,z){
+    let trunkGeo = new THREE.CylinderGeometry(0.3,0.3,3);
+    let trunkMat = new THREE.MeshPhongMaterial({color:0x8B4513});
+    let trunk = new THREE.Mesh(trunkGeo,trunkMat);
+    trunk.position.set(x,1.5,z);
+    scene.add(trunk);
+
+    let leavesGeo = new THREE.ConeGeometry(1.5,3,8);
+    let leavesMat = new THREE.MeshPhongMaterial({color:0x228B22});
+    let leaves = new THREE.Mesh(leavesGeo,leavesMat);
+    leaves.position.set(x,4.5,z);
+    scene.add(leaves);
+}
+for(let i=0;i<20;i++){
+    addTree(Math.random()*100-50,Math.random()*100-50);
 }
 
-// Återgå till menyn
-function goHome(){
-    playing=false;
-    document.getElementById("menu").style.display="block";
-    document.getElementById("gameOverScreen").style.display="none";
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    clearInterval(spawnInterval);
-    clearInterval(enemyInterval);
-}
-
-// Slut på spelet
-function gameOver(){
-    playing=false;
-    document.getElementById("finalScore").textContent="Din poäng: "+score;
-    document.getElementById("gameOverScreen").style.display="block";
-    clearInterval(spawnInterval);
-    clearInterval(enemyInterval);
-}
-
-// Objekt
-function spawnItems(){
-    spawnInterval=setInterval(()=>{
-        if(items.length<10){
-            let type=Math.random()>0.5?"food":"wood";
-            items.push({x:Math.random()*(canvas.width-20),y:Math.random()*(canvas.height-20),type:type,width:20,height:20});
-        }
-    },2000);
-}
+// Camp (eld)
+let camp = new THREE.PointLight(0xffa500,2,10);
+camp.position.set(0,0.5,0);
+scene.add(camp);
 
 // Fiender
-function spawnEnemies(){
-    enemyInterval=setInterval(()=>{
-        if(enemies.length<5){
-            enemies.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,width:25,height:25,dx:(Math.random()>0.5?1:-1)*1.5,dy:(Math.random()>0.5?1:-1)*1.5});
-        }
-    },3000);
+let enemies = [];
+function spawnEnemy(x,z){
+    let geo = new THREE.SphereGeometry(0.5);
+    let mat = new THREE.MeshPhongMaterial({color:0xff0000});
+    let enemy = new THREE.Mesh(geo,mat);
+    enemy.position.set(x,0.5,z);
+    scene.add(enemy);
+    enemies.push(enemy);
 }
 
-// Uppdatera spelare
-function updatePlayer(){
-    if(keys.up) player.y-=playerSpeed;
-    if(keys.down) player.y+=playerSpeed;
-    if(keys.left) player.x-=playerSpeed;
-    if(keys.right) player.x+=playerSpeed;
-    player.x=Math.max(0,Math.min(canvas.width-player.width,player.x));
-    player.y=Math.max(0,Math.min(canvas.height-player.height,player.y));
-    
-    // Hunger minskar över tid
-    player.hunger-=0.05;
-    if(player.hunger<=0) player.health-=0.2;
-    if(player.health<=0) gameOver();
-}
+// Dag/Natt-cykel
+let isDay = true;
+let timeCounter = 0;
 
-// Kollision
-function isColliding(a,b){
-    return a.x<a.x+b.width && a.x+a.width>b.x && a.y<a.y+b.height && a.y+a.height>b.y;
-}
+// Spel-loop
+function animate(){
+    requestAnimationFrame(animate);
+    timeCounter += 0.01;
+    if(timeCounter>20){ isDay = !isDay; timeCounter=0; }
+    sun.intensity = isDay?1:0.2;
+    ambient.intensity = isDay?0.4:0.1;
+    document.getElementById("hud").innerText = `Hälsa: ${Math.floor(player.health)} | Hunger: ${Math.floor(player.hunger)} | Tid: ${isDay?'Dag':'Natt'}`;
 
-// Game loop
-function gameLoop(){
-    if(!playing) return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Fiender spawnar på natten
+    if(!isDay && enemies.length<5){
+        spawnEnemy(Math.random()*50-25, Math.random()*50-25);
+    }
 
-    // Rita spelare
-    ctx.fillStyle="yellow";
-    ctx.fillRect(player.x,player.y,player.width,player.height);
-
-    // Rita items
-    items.forEach((item,i)=>{
-        ctx.fillStyle=item.type==="food"?"red":"brown";
-        ctx.fillRect(item.x,item.y,item.width,item.height);
-        if(player.x<item.x+item.width && player.x+player.width>item.x &&
-           player.y<item.y+item.height && player.y+player.height>item.y){
-            if(item.type==="food"){ player.hunger=Math.min(100,player.hunger+20); score+=1; }
-            else{ score+=1; }
-            items.splice(i,1);
+    // Enkel fiende rörelse
+    enemies.forEach(e=>{
+        let dx = player.x - e.position.x;
+        let dz = player.z - e.position.z;
+        let dist = Math.sqrt(dx*dx + dz*dz);
+        if(dist>1){
+            e.position.x += dx/dist*0.02;
+            e.position.z += dz/dist*0.02;
         }
     });
 
-    // Rita fiender
-    enemies.forEach((enemy,i)=>{
-        enemy.x+=enemy.dx;
-        enemy.y+=enemy.dy;
-        if(enemy.x<0||enemy.x+enemy.width>canvas.width) enemy.dx*=-1;
-        if(enemy.y<0||enemy.y+enemy.height>canvas.height) enemy.dy*=-1;
-        ctx.fillStyle="red";
-        ctx.fillRect(enemy.x,enemy.y,enemy.width,enemy.height);
+    // Kamera följer spelaren
+    camera.position.set(player.x,player.y,player.z);
 
-        if(player.x<enemy.x+enemy.width && player.x+player.width>enemy.x &&
-           player.y<enemy.y+enemy.height && player.y+player.height>enemy.y){
-            player.health-=0.5;
-        }
-    });
-
-    // HUD
-    ctx.fillStyle="white";
-    ctx.font="16px Arial";
-    ctx.fillText("Poäng: "+Math.floor(score),10,20);
-    ctx.fillText("Hälsa: "+Math.floor(player.health),10,40);
-    ctx.fillText("Hunger: "+Math.floor(player.hunger),10,60);
-
-    updatePlayer();
-    requestAnimationFrame(gameLoop);
+    renderer.render(scene,camera);
 }
+animate();
 
 // Tangentbord
-document.addEventListener("keydown",e=>{
-    if(e.key==="ArrowUp"||e.key==="w") keys.up=true;
-    if(e.key==="ArrowDown"||e.key==="s") keys.down=true;
-    if(e.key==="ArrowLeft"||e.key==="a") keys.left=true;
-    if(e.key==="ArrowRight"||e.key==="d") keys.right=true;
+let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+document.addEventListener('keydown', e=>{
+    if(e.key==='w') moveForward=true;
+    if(e.key==='s') moveBackward=true;
+    if(e.key==='a') moveLeft=true;
+    if(e.key==='d') moveRight=true;
 });
-document.addEventListener("keyup",e=>{
-    if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
-    if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
-    if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
-    if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
-});
-
-// Touch
-let touchX=0,touchY=0;
-canvas.addEventListener("touchstart",e=>{touchX=e.touches[0].clientX; touchY=e.touches[0].clientY;});
-canvas.addEventListener("touchmove",e=>{
-    e.preventDefault();
-    let dx=e.touches[0].clientX-touchX;
-    let dy=e.touches[0].clientY-touchY;
-    player.x+=dx*0.1;
-    player.y+=dy*0.1;
-    touchX=e.touches[0].clientX;
-    touchY=e.touches[0].clientY;
+document.addEventListener('keyup', e=>{
+    if(e.key==='w') moveForward=false;
+    if(e.key==='s') moveBackward=false;
+    if(e.key==='a') moveLeft=false;
+    if(e.key==='d') moveRight=false;
 });
 
-document.getElementById("menu").style.display="block";
+// Enkel spelarrörelse
+function updatePlayer(){
+    let speed=0.1;
+    if(moveForward) player.z -= speed;
+    if(moveBackward) player.z += speed;
+    if(moveLeft) player.x -= speed;
+    if(moveRight) player.x += speed;
+}
+setInterval(updatePlayer,16);
 </script>
 </body>
 </html>
