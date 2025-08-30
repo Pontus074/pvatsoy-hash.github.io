@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Pingis 🏓</title>
+  <style>
+    body { margin:0; font-family:Arial, sans-serif; background:#2c3e50; color:white; text-align:center; }
+    header { padding:20px; background:#1e272e; }
+    canvas { background:#ecf0f1; display:block; margin:20px auto; border-radius:8px; }
+    #score { font-size:18px; }
+    .menu { margin-top:20px; }
+    button {
+      margin:10px; padding:10px 20px; border:none;
+      background:#1abc9c; color:white; border-radius:5px; cursor:pointer;
+    }
+    button:hover { background:#16a085; }
+    #gameOverScreen {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.85); color:white;
+      display:none; justify-content:center; align-items:center; flex-direction:column;
+    }
+    #gameOverScreen h2 { margin-bottom:20px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏓 Pingis 🏓</h1>
+</header>
+
+<p id="score">Poäng: 0 | Missar kvar: 3</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<div class="menu">
+  <button onclick="startGame()">Starta om</button>
+  <a href="index.html"><button>Tillbaka</button></a>
+</div>
+
+<div id="gameOverScreen">
+  <h2 id="gameOverText">Game Over!</h2>
+  <button onclick="startGame()">🔄 Starta om</button>
+  <a href="index.html"><button>🏠 Tillbaka</button></a>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let score, lives, ball, player, ai, game;
+
+function startGame() {
+  score = 0; lives = 3;
+  ball = {x:300,y:200,dx:4,dy:3,r:8};
+  player = {y:150,h:100,w:10};
+  ai = {y:150,h:100,w:10};
+  document.getElementById("score").textContent = "Poäng: 0 | Missar kvar: 3";
+  document.getElementById("gameOverScreen").style.display = "none";
+  clearInterval(game);
+  game = setInterval(draw, 20);
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // racketar
+  ctx.fillRect(10,player.y,player.w,player.h);
+  ctx.fillRect(canvas.width-20,ai.y,ai.w,ai.h);
+
+  // boll
+  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+
+  // rörelse
+  ball.x += ball.dx; ball.y += ball.dy;
+  if(ball.y<0||ball.y>canvas.height) ball.dy*=-1;
+
+  // träff spelare
+  if(ball.x<player.w+10 && ball.y>player.y && ball.y<player.y+player.h) ball.dx*=-1;
+  // träff ai
+  if(ball.x>canvas.width-ai.w-20 && ball.y>ai.y && ball.y<ai.y+ai.h){ ball.dx*=-1; score++; }
+
+  // ai följer boll
+  ai.y += (ball.y - (ai.y+ai.h/2)) * 0.1;
+
+  // missar
+  if(ball.x<0){
+    lives--;
+    if(lives<=0){ gameOver(); return; }
+    resetBall();
+  }
+
+  document.getElementById("score").textContent = "Poäng: "+score+" | Missar kvar: "+lives;
+}
+
+function resetBall() {
+  ball = {x:300,y:200,dx:4,dy:3,r:8};
+}
+
+// Game Over meny
+function gameOver() {
+  clearInterval(game);
+  document.getElementById("gameOverText").textContent = "Game Over! Poäng: " + score;
+  document.getElementById("gameOverScreen").style.display = "flex";
+}
+
+// styrning
+canvas.addEventListener("mousemove",e=>player.y=e.offsetY-50);
+canvas.addEventListener("touchmove",e=>{player.y=e.touches[0].clientY-50;});
+</script>
+
+</body>
+</html>
