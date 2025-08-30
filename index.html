@@ -2,146 +2,111 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <title>Driftspel Demo</title>
+    <title>min sida</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #333; }
-        canvas { display: block; }
-        #money { position: absolute; top: 10px; left: 10px; color: white; font-family: Arial; font-size: 20px; }
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+
+        /* Bakgrund */
+        body {
+            height: 100vh;
+            background: url('Mindbild.png') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+        }
+
+        /* Header / Meny */
+        header {
+            width: 100%;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            z-index: 10;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        header a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Välkomsttext */
+        .welcome {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .welcome h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .welcome p {
+            font-size: 24px;
+        }
+
+        /* Kommer snart sida */
+        .soon {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 36px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+        }
+
+        /* Skapa enkel fade-effekt vid byte av sida */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div id="money">Pengar: 0</div>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+    <!-- Header / Meny -->
+    <header>
+        <a href="#" onclick="showPage('home')">Hem</a>
+        <a href="#" onclick="showPage('about')">Om oss</a>
+        <a href="#" onclick="showPage('services')">Tjänster</a>
+        <a href="#" onclick="showPage('products')">produktr</a>
+        <a href="#" onclick="showPage('contact')">Kontakt</a>
+    </header>
+
+    <!-- Startsidan -->
+    <div id="home" class="welcome">
+        <div>
+            <h1>Välkommen till min sida!</h1>
+            <p>mer kommer snart/p>
+        </div>
+    </div>
+
+    <!-- Kommer snart sidor -->
+    <div id="about" class="soon hidden">1 Kommer snart</div>
+    <div id="services" class="soon hidden">2 Kommer snart</div>
+    <div id="portfolio" class="soon hidden">3 Kommer snart</div>
+    <div id="contact" class="soon hidden">4 Kommer snart</div>
+
     <script>
-        // --- Variabler ---
-        let scene, camera, renderer;
-        let vehicle;
-        let keys = {};
-        let money = 0;
-        let driftPoints = 0;
-
-        // --- Init ---
-        init();
-        animate();
-
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x333333);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 10);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            // Ljus
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 10, 7);
-            scene.add(light);
-            scene.add(new THREE.AmbientLight(0x404040));
-
-            // Mark
-            const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(50, 50),
-                new THREE.MeshStandardMaterial({ color: 0x228B22 })
-            );
-            ground.rotation.x = -Math.PI/2;
-            scene.add(ground);
-
-            // Bana (enkel start/mållinje)
-            const startLine = new THREE.Mesh(
-                new THREE.PlaneGeometry(5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffffff })
-            );
-            startLine.position.set(0, 0.01, 20);
-            startLine.rotation.x = -Math.PI/2;
-            scene.add(startLine);
-
-            const finishLine = new THREE.Mesh(
-                new THREE.PlaneGeometry(5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffff00 })
-            );
-            finishLine.position.set(0, 0.01, -20);
-            finishLine.rotation.x = -Math.PI/2;
-            scene.add(finishLine);
-
-            // Bil
-            vehicle = new Vehicle(scene);
-
-            // Event listeners
-            window.addEventListener('keydown', (e) => keys[e.key] = true);
-            window.addEventListener('keyup', (e) => keys[e.key] = false);
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        // --- Bilklass ---
-        class Vehicle {
-            constructor(scene) {
-                const geometry = new THREE.BoxGeometry(2, 1, 4); // enkel bil
-                const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-                this.mesh = new THREE.Mesh(geometry, material);
-                this.mesh.position.y = 0.5;
-                this.mesh.position.z = 20; // startlinje
-                scene.add(this.mesh);
-
-                this.speed = 0;
-                this.maxSpeed = 0.5;
-                this.acceleration = 0.01;
-                this.turnSpeed = 0.03;
-            }
-
-            update(keys) {
-                // Framåt & bakåt
-                if(keys['ArrowUp']) this.speed = Math.min(this.speed + this.acceleration, this.maxSpeed);
-                else if(keys['ArrowDown']) this.speed = Math.max(this.speed - this.acceleration, -this.maxSpeed/2);
-                else this.speed *= 0.95; // friktion
-
-                // Vändning
-                if(keys['ArrowLeft']) this.mesh.rotation.y += this.turnSpeed * (this.speed / this.maxSpeed);
-                if(keys['ArrowRight']) this.mesh.rotation.y -= this.turnSpeed * (this.speed / this.maxSpeed);
-
-                // Rörelse framåt
-                this.mesh.position.x -= Math.sin(this.mesh.rotation.y) * this.speed;
-                this.mesh.position.z -= Math.cos(this.mesh.rotation.y) * this.speed;
-
-                // Driftpoäng (om man svänger och rör sig framåt)
-                if((keys['ArrowLeft'] || keys['ArrowRight']) && this.speed > 0.1) {
-                    driftPoints += 0.1;
-                }
-
-                // Kontrollera mål
-                if(this.mesh.position.z <= -20) {
-                    money += Math.floor(driftPoints);
-                    driftPoints = 0;
-                    this.mesh.position.set(0, 0.5, 20); // starta om
-                    this.speed = 0;
-                    alert("Mål! Du tjänade pengar baserat på driften.");
-                }
-            }
-        }
-
-        // --- Animationsloop ---
-        function animate() {
-            requestAnimationFrame(animate);
-
-            vehicle.update(keys);
-
-            // Kameran följer bilen
-            camera.position.x = vehicle.mesh.position.x + 10 * Math.sin(vehicle.mesh.rotation.y);
-            camera.position.z = vehicle.mesh.position.z + 10 * Math.cos(vehicle.mesh.rotation.y);
-            camera.position.y = 5;
-            camera.lookAt(vehicle.mesh.position);
-
-            document.getElementById('money').innerText = 'Pengar: ' + money;
-
-            renderer.render(scene, camera);
+        function showPage(pageId) {
+            // Dölj alla sidor
+            document.querySelectorAll('.welcome, .soon').forEach(el => el.classList.add('hidden'));
+            // Visa vald sida
+            document.getElementById(pageId).classList.remove('hidden');
         }
     </script>
 </body>
