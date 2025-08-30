@@ -42,12 +42,14 @@ let keyUp=false,keyDown=false;
 let obstacles=[];
 
 function resetBall(){
+  // Starta långsammare
+  let startSpeed = Math.max(2, speed*0.6); 
   ball={
     x:canvas.width/2,
     y:canvas.height/2,
     radius:8,
-    speedX:speed*(Math.random()>0.5?1:-1),
-    speedY:speed*(Math.random()>0.5?1:-1)
+    speedX:startSpeed*(Math.random()>0.5?1:-1),
+    speedY:startSpeed*(Math.random()>0.5?1:-1)
   };
 }
 
@@ -81,7 +83,6 @@ function updatePlayer(){
   player.y=Math.max(0,Math.min(canvas.height-player.height,player.y));
 }
 
-// Skapa hinder för vissa nivåer
 function addObstacles(){
   obstacles=[];
   for(let i=0;i<level-1;i++){
@@ -182,4 +183,4 @@ canvas.addEventListener("touchmove",e=>{
 goHome();
 </script>
 </body>
-</html>  
+</html>
