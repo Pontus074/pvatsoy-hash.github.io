@@ -2,103 +2,156 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>3D Bilspel – Öppen värld</title>
+  <title>Bra Start UF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    canvas { display: block; }
-    #help {
-      position: fixed; bottom: 20px; left: 20px;
-      background: rgba(0,0,0,0.6); color: white;
-      padding: 10px 15px; border-radius: 10px;
-      font-family: Arial, sans-serif; font-size: 14px;
+    /* Grundstil */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    /* Header */
+    header {
+      background: #27ae60;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+    header p {
+      margin: 5px 0 0;
+      font-size: 18px;
+    }
+
+    /* Meny */
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #2c3e50;
+    }
+    nav a {
+      color: white;
+      padding: 14px 20px;
+      text-decoration: none;
+      display: block;
+      transition: 0.2s;
+    }
+    nav a:hover {
+      background: #34495e;
+    }
+
+    /* Sektioner */
+    section {
+      padding: 50px 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    section h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #27ae60;
+    }
+
+    /* Produkter */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .product {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .product h3 {
+      margin-top: 0;
+    }
+
+    /* Footer */
+    footer {
+      background: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+    .social a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
-<div id="help">
-  ⬆️ ⬇️ Gasa / Backa<br>
-  ⬅️ ➡️ Styr vänster / höger<br>
-  WASD fungerar också
-</div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.156.1/build/three.min.js"></script>
 
-<script>
-let scene, camera, renderer, car, keys = {};
+  <!-- Header -->
+  <header>
+    <h1>Bra Start UF</h1>
+    <p>Hållbar och god müsli på räddad frukt och bär 🌱</p>
+  </header>
 
-init();
-animate();
+  <!-- Meny -->
+  <nav>
+    <a href="#omoss">Om oss</a>
+    <a href="#produkter">Våra produkter</a>
+    <a href="#kontakt">Kontakt</a>
+  </nav>
 
-function init() {
-  scene = new THREE.Scene();
+  <!-- Om oss -->
+  <section id="omoss">
+    <h2>Om oss</h2>
+    <p>
+      Vi på <strong>Bra Start UF</strong> vill minska matsvinnet och samtidigt erbjuda god och hälsosam müsli.
+      Vår affärsidé är att köpa in frukt och bär som butiker annars hade slängt, torka dem och skapa tre unika müslisorter.
+      På så sätt tar vi vara på resurser som annars hade gått till spillo och ger dig en hållbar start på dagen.
+    </p>
+  </section>
 
-  // Kamera
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
-  camera.position.set(0, 10, -20);
+  <!-- Produkter -->
+  <section id="produkter">
+    <h2>Våra produkter</h2>
+    <div class="products">
+      <div class="product">
+        <h3>Klassisk</h3>
+        <p>En balanserad müsli med torkad frukt och nötter. Perfekt för hela familjen.</p>
+      </div>
+      <div class="product">
+        <h3>Bärig</h3>
+        <p>Fullpackad med torkade bär för en frisk och fruktig smakupplevelse.</p>
+      </div>
+      <div class="product">
+        <h3>Krispig</h3>
+        <p>En lite lyxigare müsli med extra crunch och spännande smakkombinationer.</p>
+      </div>
+    </div>
+  </section>
 
-  // Renderer
-  renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  <!-- Kontakt -->
+  <section id="kontakt">
+    <h2>Kontakt</h2>
+    <p>📍 Plats: Din skola / stad</p>
+    <p>📧 E-post: <a href="mailto:kontakt@brastartuf.se">kontakt@brastartuf.se</a></p>
+    <p>📞 Telefon: 070-123 45 67</p>
+  </section>
 
-  // Ljus
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(20, 50, 20);
-  scene.add(light);
-  scene.add(new THREE.AmbientLight(0x404040));
+  <!-- Footer -->
+  <footer>
+    <p>Följ oss på sociala medier!</p>
+    <div class="social">
+      <a href="https://instagram.com" target="_blank">📸 Instagram</a>
+      <a href="https://facebook.com" target="_blank">📘 Facebook</a>
+    </div>
+    <p>&copy; 2025 Bra Start UF</p>
+  </footer>
 
-  // Mark
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(2000, 2000),
-    new THREE.MeshPhongMaterial({color: 0x228B22})
-  );
-  ground.rotation.x = -Math.PI/2;
-  scene.add(ground);
-
-  // En enkel bil (låda)
-  const carGeometry = new THREE.BoxGeometry(4, 2, 8);
-  const carMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
-  car = new THREE.Mesh(carGeometry, carMaterial);
-  car.position.y = 1;
-  scene.add(car);
-
-  // Event listeners
-  window.addEventListener("resize", onWindowResize, false);
-  document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-  document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-}
-
-let speed = 0;
-let angle = 0;
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  // Enkel bilfysik
-  if (keys["arrowup"] || keys["w"]) speed += 0.05;
-  if (keys["arrowdown"] || keys["s"]) speed -= 0.05;
-  if (keys["arrowleft"] || keys["a"]) angle += 0.03;
-  if (keys["arrowright"] || keys["d"]) angle -= 0.03;
-
-  speed *= 0.98; // friktion
-
-  car.rotation.y = angle;
-  car.position.x += Math.sin(angle) * speed;
-  car.position.z += Math.cos(angle) * speed;
-
-  // Följ bilen med kameran
-  camera.position.x = car.position.x - Math.sin(angle) * 15;
-  camera.position.z = car.position.z - Math.cos(angle) * 15;
-  camera.position.y = car.position.y + 8;
-  camera.lookAt(car.position);
-
-  renderer.render(scene, camera);
-}
-
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-</script>
 </body>
 </html>
