@@ -2,99 +2,103 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Min hemsida</title>
+  <title>3D Bilspel – Öppen värld</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-      background: url('minbild.png') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-    }
-
-    nav {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 15px;
-      position: fixed;
-      top: 0;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      z-index: 1000;
-    }
-
-    nav button {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid white;
-      padding: 10px 20px;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: 0.3s;
-    }
-
-    nav button:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    .page {
-      display: none;
-      padding: 150px 20px 50px 20px; /* mer utrymme för nav */
-    }
-
-    .active {
-      display: block;
-    }
-
-    h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-    }
-
-    p {
-      font-size: 24px;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
+    #help {
+      position: fixed; bottom: 20px; left: 20px;
+      background: rgba(0,0,0,0.6); color: white;
+      padding: 10px 15px; border-radius: 10px;
+      font-family: Arial, sans-serif; font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <nav>
-    <button onclick="showPage(1)">Hem</button>
-    <button onclick="showPage(2)">Meny 1</button>
-    <button onclick="showPage(3)">Meny 2</button>
-    <button onclick="showPage(4)">Meny 3</button>
-  </nav>
+<div id="help">
+  ⬆️ ⬇️ Gasa / Backa<br>
+  ⬅️ ➡️ Styr vänster / höger<br>
+  WASD fungerar också
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.1/build/three.min.js"></script>
 
-  <div id="page1" class="page active">
-    <h1>Välkommen!</h1>
-    <p>Detta är startsidan. Klicka på menyerna för mer.</p>
-  </div>
+<script>
+let scene, camera, renderer, car, keys = {};
 
-  <div id="page2" class="page">
-    <h1>Meny 1</h1>
-    <p>Kommer snart!</p>
-  </div>
+init();
+animate();
 
-  <div id="page3" class="page">
-    <h1>Meny 2</h1>
-    <p>Kommer snart!</p>
-  </div>
+function init() {
+  scene = new THREE.Scene();
 
-  <div id="page4" class="page">
-    <h1>Meny 3</h1>
-    <p>Kommer snart!</p>
-  </div>
+  // Kamera
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+  camera.position.set(0, 10, -20);
 
-  <script>
-    function showPage(num) {
-      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-      document.getElementById("page" + num).classList.add("active");
-    }
-  </script>
+  // Renderer
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Ljus
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(20, 50, 20);
+  scene.add(light);
+  scene.add(new THREE.AmbientLight(0x404040));
+
+  // Mark
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(2000, 2000),
+    new THREE.MeshPhongMaterial({color: 0x228B22})
+  );
+  ground.rotation.x = -Math.PI/2;
+  scene.add(ground);
+
+  // En enkel bil (låda)
+  const carGeometry = new THREE.BoxGeometry(4, 2, 8);
+  const carMaterial = new THREE.MeshPhongMaterial({color: 0xff0000});
+  car = new THREE.Mesh(carGeometry, carMaterial);
+  car.position.y = 1;
+  scene.add(car);
+
+  // Event listeners
+  window.addEventListener("resize", onWindowResize, false);
+  document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+  document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+}
+
+let speed = 0;
+let angle = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Enkel bilfysik
+  if (keys["arrowup"] || keys["w"]) speed += 0.05;
+  if (keys["arrowdown"] || keys["s"]) speed -= 0.05;
+  if (keys["arrowleft"] || keys["a"]) angle += 0.03;
+  if (keys["arrowright"] || keys["d"]) angle -= 0.03;
+
+  speed *= 0.98; // friktion
+
+  car.rotation.y = angle;
+  car.position.x += Math.sin(angle) * speed;
+  car.position.z += Math.cos(angle) * speed;
+
+  // Följ bilen med kameran
+  camera.position.x = car.position.x - Math.sin(angle) * 15;
+  camera.position.z = car.position.z - Math.cos(angle) * 15;
+  camera.position.y = car.position.y + 8;
+  camera.lookAt(car.position);
+
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+</script>
 </body>
 </html>
