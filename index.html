@@ -1,218 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Space Dodger</title>
-  <style>
-    :root{--bg:#061021;--panel:#0b1a2b;--accent:#49d0ff;--muted:#9fb7c9}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#021023 0%,#041327 60%);color:white}
-    .wrap{width:960px;max-width:96%;background:linear-gradient(180deg,var(--panel),#071726);box-shadow:0 12px 30px rgba(2,8,18,.6);border-radius:12px;padding:18px}
-    header{display:flex;align-items:center;gap:12px}
-    h1{font-size:20px;margin:0}
-    p.subtitle{margin:0;color:var(--muted);font-size:13px}
-
-    .game-area{display:flex;gap:16px;margin-top:12px}
-    canvas{background:linear-gradient(180deg,#031526,#011219);border-radius:8px;display:block}
-    .sidebar{width:260px;min-width:220px}
-    .panel{background:rgba(255,255,255,0.03);padding:12px;border-radius:10px;margin-bottom:12px}
-    .big{font-size:28px;font-weight:700}
-    .small{font-size:13px;color:var(--muted)}
-    button{appearance:none;border:0;background:var(--accent);color:#002133;padding:8px 12px;border-radius:8px;font-weight:600;cursor:pointer}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .touch-controls{display:none;margin-top:8px}
-    .bar{height:8px;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden}
-    .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#6ff1ff);width:0%}
-    .muted{color:var(--muted)}
-    .footer{font-size:12px;color:var(--muted);margin-top:8px}
-
-    @media (max-width:720px){.wrap{padding:12px}.game-area{flex-direction:column}.sidebar{width:100%}.touch-controls{display:flex;gap:8px}}
-  </style>
+    <meta charset="UTF-8">
+    <title>3D Golfspel</title>
+    <style>
+        body { margin: 0; font-family: sans-serif; background-color: #222; color: #fff; }
+        canvas { display: block; }
+        #ui { position: absolute; top: 10px; left: 10px; }
+        button { padding: 10px; margin: 5px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #666; }
+        #shop, #startScreen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #333; padding: 20px; border-radius: 10px; display: none; text-align: center; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>Space Dodger</h1>
-        <p class="subtitle">Undvik rymdstenar — hur länge klarar du dig? (Piltangenter / A D / touch)</p>
-      </div>
-      <div style="margin-left:auto" class="muted">Enfilssida för GitHub Pages</div>
-    </header>
+<div id="ui">
+    <div>Pengar: <span id="money">0</span></div>
+    <button id="startButton">Starta spel</button>
+    <button id="shopButton">Shop</button>
+</div>
 
-    <div class="game-area">
-      <div style="flex:1">
-        <canvas id="game" width="640" height="400"></canvas>
-        <div class="touch-controls" style="justify-content:center;">
-          <button id="leftTouch">◀</button>
-          <button id="pauseTouch">Pause</button>
-          <button id="rightTouch">▶</button>
-        </div>
-      </div>
+<div id="shop">
+    <h2>Shop / Uppgraderingar</h2>
+    <button id="upgradePower">Öka kraft (100)</button>
+    <button id="upgradePrecision">Öka precision (100)</button>
+    <br><br>
+    <button id="closeShop">Stäng</button>
+</div>
 
-      <div class="sidebar">
-        <div class="panel">
-          <div class="small">Poäng</div>
-          <div class="big" id="score">0</div>
-        </div>
+<div id="startScreen">
+    <h1>3D Golfspel</h1>
+    <button id="playButton">Spela!</button>
+</div>
 
-        <div class="panel">
-          <div class="small">Bästa</div>
-          <div class="big" id="best">0</div>
-        </div>
-
-        <div class="panel">
-          <div class="small">Hastighet</div>
-          <div class="muted" id="speedText">Långsam</div>
-          <div class="bar" style="margin-top:8px"><i id="speedBar"></i></div>
-        </div>
-
-        <div class="panel">
-          <div class="controls">
-            <button id="startBtn">Start</button>
-            <button id="restartBtn">Restart</button>
-            <button id="toggleSoundBtn">Ljud: På</button>
-          </div>
-          <p class="footer">Kontroller: ← → eller A/D. Tryck Pause eller använd touch-knappar på mobil.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
 <script>
-// --- Enkel Space Dodger ---
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let width = canvas.width, height = canvas.height;
+let scene, camera, renderer;
+let ball, hole;
+let money = 0;
+let power = 1;
+let precision = 1;
+let ballVelocity = new THREE.Vector3(0,0,0);
+let isMoving = false;
+let mouseStart = null;
 
-// Spelar
-const ship = {x: width/2 - 18, y: height - 56, w:36, h:48, speed: 260};
-let left=false, right=false, running=false, paused=false, soundOn=true;
-let score=0, best= parseInt(localStorage.getItem('space-dodger-best')||'0');
-document.getElementById('best').textContent = best;
+const startButton = document.getElementById('startButton');
+const shopButton = document.getElementById('shopButton');
+const moneyEl = document.getElementById('money');
+const shop = document.getElementById('shop');
+const upgradePower = document.getElementById('upgradePower');
+const upgradePrecision = document.getElementById('upgradePrecision');
+const closeShop = document.getElementById('closeShop');
+const startScreen = document.getElementById('startScreen');
+const playButton = document.getElementById('playButton');
 
-// Asteroider
-let asteroids = [];
-let spawnTimer = 0;
-let difficulty = 1;
+startButton.onclick = () => { startScreen.style.display='block'; };
+playButton.onclick = () => { startScreen.style.display='none'; init(); animate(); };
+shopButton.onclick = () => { shop.style.display='block'; };
+closeShop.onclick = () => { shop.style.display='none'; };
+upgradePower.onclick = () => { if(money >= 100){ money-=100; power+=0.5; updateMoney(); } };
+upgradePrecision.onclick = () => { if(money >= 100){ money-=100; precision+=0.1; updateMoney(); } };
 
-// ljud (enkelt)
-const beep = ()=>{ if(!soundOn) return; try{ const o=new AudioContext(); const s=o.createOscillator(); const g=o.createGain(); s.type='sine'; s.frequency.value=200; g.gain.value=0.02; s.connect(g); g.connect(o.destination); s.start(); setTimeout(()=>{s.stop();o.close()},80);}catch(e){} }
+function updateMoney(){ moneyEl.textContent = money; }
 
-function resizeCanvas(){ /* håller design konstant */ }
+function init(){
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
 
-function reset(){ score=0; asteroids=[]; spawnTimer=0; difficulty=1; ship.x = width/2 - ship.w/2; document.getElementById('score').textContent = score; updateSpeedUI(); }
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 10, 20);
+    camera.lookAt(0,0,0);
 
-function startGame(){ reset(); running=true; paused=false; lastTime = performance.now(); loop(lastTime); }
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-document.getElementById('startBtn').addEventListener('click', ()=>{ if(!running) startGame(); else paused=!paused; document.getElementById('pauseTouch').textContent = paused? 'Resume':'Pause'; });
+    // Light
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5,10,7.5);
+    scene.add(light);
 
-document.getElementById('restartBtn').addEventListener('click', ()=>{ reset(); running=true; paused=false; lastTime = performance.now(); loop(lastTime); });
-document.getElementById('toggleSoundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; document.getElementById('toggleSoundBtn').textContent = 'Ljud: ' + (soundOn? 'På':'Av'); });
+    // Ground
+    const groundGeometry = new THREE.PlaneGeometry(50,50);
+    const groundMaterial = new THREE.MeshStandardMaterial({color:0x228B22});
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI/2;
+    scene.add(ground);
 
-// touch
-document.getElementById('leftTouch').addEventListener('touchstart', e=>{ e.preventDefault(); left=true; });
-document.getElementById('leftTouch').addEventListener('touchend', e=>{ e.preventDefault(); left=false; });
+    // Ball
+    const ballGeometry = new THREE.SphereGeometry(0.5,32,32);
+    const ballMaterial = new THREE.MeshStandardMaterial({color:0xffffff});
+    ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    ball.position.set(0,0.5,0);
+    scene.add(ball);
 
-document.getElementById('rightTouch').addEventListener('touchstart', e=>{ e.preventDefault(); right=true; });
-document.getElementById('rightTouch').addEventListener('touchend', e=>{ e.preventDefault(); right=false; });
+    // Hole
+    const holeGeometry = new THREE.CylinderGeometry(0.7,0.7,0.1,32);
+    const holeMaterial = new THREE.MeshStandardMaterial({color:0x000000});
+    hole = new THREE.Mesh(holeGeometry, holeMaterial);
+    hole.position.set(Math.random()*20-10,0.05,Math.random()*20-10);
+    scene.add(hole);
 
-document.getElementById('pauseTouch').addEventListener('click', ()=>{ if(!running) startGame(); else { paused=!paused; document.getElementById('pauseTouch').textContent = paused? 'Resume':'Pause'; }});
-
-// tangentbord
-window.addEventListener('keydown', e=>{
-  if(e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') left=true;
-  if(e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') right=true;
-  if(e.key === ' '){ paused = !paused; }
-});
-window.addEventListener('keyup', e=>{
-  if(e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') left=false;
-  if(e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') right=false;
-});
-
-// spel-loop
-let lastTime = performance.now();
-function loop(t){ if(!running) return; if(paused){ lastTime = t; requestAnimationFrame(loop); return; }
-  const dt = Math.min(0.05,(t - lastTime)/1000); lastTime = t;
-  update(dt); render(); requestAnimationFrame(loop);
+    // Event listeners for shooting
+    window.addEventListener('mousedown', (e)=>{ mouseStart = {x:e.clientX, y:e.clientY}; });
+    window.addEventListener('mouseup', (e)=>{ if(mouseStart){
+        const dx = (e.clientX - mouseStart.x)/50;
+        const dz = (e.clientY - mouseStart.y)/50;
+        ballVelocity.set(dx*power,0,dz*power);
+        isMoving = true;
+        mouseStart = null;
+    }});
 }
 
-function update(dt){ // rörelse
-  const mv = ship.speed * dt * (1 + (difficulty-1)*0.08);
-  if(left) ship.x -= mv; if(right) ship.x += mv;
-  ship.x = Math.max(6, Math.min(width-ship.w-6, ship.x));
+function animate(){
+    requestAnimationFrame(animate);
 
-  spawnTimer -= dt;
-  if(spawnTimer <= 0){ spawnAsteroid(); spawnTimer = 0.6 - Math.min(0.45, difficulty*0.02); }
+    if(isMoving){
+        ball.position.add(ballVelocity);
+        ballVelocity.multiplyScalar(0.98); // friction
+        if(ballVelocity.length() < 0.01) isMoving = false;
 
-  // uppdatera asteroider
-  for(let i=asteroids.length-1;i>=0;i--){
-    const a = asteroids[i];
-    a.y += a.speed * dt;
-    a.rotation += a.spin * dt;
-    if(a.y - a.r > height + 20){ asteroids.splice(i,1); score += 1; if(score%10===0){ difficulty += 0.5; } updateScoreUI(); }
-    if(collidesShip(a)){
-      hit(); return;
+        // Check hole
+        const dist = ball.position.distanceTo(hole.position);
+        if(dist < 1){
+            money += 50;
+            updateMoney();
+            resetBall();
+        }
     }
-  }
+
+    renderer.render(scene, camera);
 }
 
-function spawnAsteroid(){ const r = 10 + Math.random()*28; const x = 10 + Math.random()*(width-20); const speed = 80 + Math.random()*120 + difficulty*15; const spin = (Math.random()-0.5)*6; asteroids.push({x, y:-r-10, r, speed, spin, rotation:Math.random()*Math.PI*2}); }
-
-function collidesShip(a){ // approximera ship som rectangle, asteroid circle
-  const rx = ship.x, ry = ship.y, rw = ship.w, rh = ship.h;
-  const closestX = Math.max(rx, Math.min(a.x, rx+rw));
-  const closestY = Math.max(ry, Math.min(a.y, ry+rh));
-  const dx = a.x - closestX, dy = a.y - closestY;
-  return dx*dx + dy*dy < a.r*a.r;
+function resetBall(){
+    ball.position.set(0,0.5,0);
+    hole.position.set(Math.random()*20-10,0.05,Math.random()*20-10);
+    ballVelocity.set(0,0,0);
+    isMoving = false;
 }
-
-function hit(){ beep(); running=false; if(score>best){ best = score; localStorage.setItem('space-dodger-best', best); document.getElementById('best').textContent = best; }
-  // liten effekt
-  shakeScreen();
-}
-
-function shakeScreen(){ let n=0; const id = setInterval(()=>{ n++; canvas.style.transform = `translate(${(Math.random()-0.5)*6}px, ${(Math.random()-0.5)*6}px)`; if(n>12){ clearInterval(id); canvas.style.transform=''; } },30); }
-
-function updateScoreUI(){ document.getElementById('score').textContent = score; const speed = Math.min(100, (difficulty-1)*6 + 20); document.getElementById('speedBar').style.width = speed + '%'; document.getElementById('speedText').textContent = difficulty < 3 ? 'Långsam' : difficulty < 6 ? 'Medel' : 'Snabb'; }
-
-function updateSpeedUI(){ const speed = Math.min(100, (difficulty-1)*6 + 20); document.getElementById('speedBar').style.width = speed + '%'; document.getElementById('speedText').textContent = difficulty < 3 ? 'Långsam' : difficulty < 6 ? 'Medel' : 'Snabb'; }
-
-// rendering
-function render(){ ctx.clearRect(0,0,width,height);
-  // bakgrundstjärnor
-  drawStars();
-  // ship
-  drawShip();
-  // asteroider
-  for(const a of asteroids) drawAsteroid(a);
-  // hud
-  if(!running){ ctx.save(); ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,width,height); ctx.fillStyle='white'; ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.fillText('Tryck Start för att spela', width/2, height/2 - 6); ctx.font='14px system-ui'; ctx.fillText('Undvik asteroiderna och försök slå ditt rekord', width/2, height/2 + 18); ctx.restore(); }
-}
-
-function drawStars(){ // enkel procedur
-  ctx.save(); for(let i=0;i<30;i++){ const sx = (i*37)%width + (performance.now()*0.01*(i%3)); const sy = (i*73)%height; const s = (i%3)+0.6; ctx.globalAlpha = 0.6; ctx.fillStyle='#ffffff'; roundRect(ctx, sx%width, sy, s, s, 2); } ctx.restore(); }
-
-function drawShip(){ ctx.save(); const x = ship.x, y = ship.y, w = ship.w, h = ship.h; // kropp
-  ctx.translate(x + w/2, y + h/2);
-  ctx.rotate(0);
-  ctx.fillStyle = 'rgba(73,208,255,0.12)'; roundRect(ctx, -w/2-2, -h/2-2, w+4, h+4, 8);
-  ctx.fillStyle = '#49d0ff'; // triangel
-  ctx.beginPath(); ctx.moveTo(-w/2, h/2); ctx.lineTo(w/2, h/2); ctx.lineTo(0, -h/2); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.08)'; roundRect(ctx, -w/2+6, -h/2+6, w-12, h-12,6);
-  ctx.restore(); }
-
-function drawAsteroid(a){ ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.rotation); ctx.beginPath(); // enkel polygon-look
-  const spikes = Math.max(6, Math.floor(a.r/4)+3);
-  for(let i=0;i<spikes;i++){ const ang = (i/spikes)*Math.PI*2; const rad = a.r * (0.75 + Math.random()*0.5); const px = Math.cos(ang)*rad; const py = Math.sin(ang)*rad; if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); }
-  ctx.closePath(); ctx.fillStyle='rgba(150,140,120,0.95)'; ctx.fill(); ctx.strokeStyle='rgba(20,20,20,0.3)'; ctx.stroke(); ctx.restore(); }
-
-function roundRect(ctx,x,y,w,h,r){ if(w<2*r) r=w/2; if(h<2*r) r=h/2; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill(); }
-
-// start utan att autostart
-render(); updateSpeedUI();
-
 </script>
 </body>
 </html>
-
