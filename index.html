@@ -1,142 +1,153 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <title>3D Golfspel</title>
-    <style>
-        body { margin: 0; font-family: sans-serif; background-color: #222; color: #fff; }
-        canvas { display: block; }
-        #ui { position: absolute; top: 10px; left: 10px; }
-        button { padding: 10px; margin: 5px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #666; }
-        #shop, #startScreen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #333; padding: 20px; border-radius: 10px; display: none; text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Dodge the Blocks</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #gameCanvas {
+      background: #222;
+      display: block;
+      margin: auto;
+      border: 2px solid white;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      display: none;
+    }
+    #menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<div id="ui">
-    <div>Pengar: <span id="money">0</span></div>
-    <button id="startButton">Starta spel</button>
-    <button id="shopButton">Shop</button>
-</div>
+  <div id="score">Poäng: 0</div>
+  <div id="menu">
+    <h1>Dodge the Blocks</h1>
+    <button id="startBtn">Starta spel</button>
+  </div>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
 
-<div id="shop">
-    <h2>Shop / Uppgraderingar</h2>
-    <button id="upgradePower">Öka kraft (100)</button>
-    <button id="upgradePrecision">Öka precision (100)</button>
-    <br><br>
-    <button id="closeShop">Stäng</button>
-</div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDiv = document.getElementById("score");
+    const menu = document.getElementById("menu");
+    const startBtn = document.getElementById("startBtn");
 
-<div id="startScreen">
-    <h1>3D Golfspel</h1>
-    <button id="playButton">Spela!</button>
-</div>
+    const player = { x: 180, y: 550, width: 40, height: 40, speed: 5 };
+    let blocks = [];
+    let blockSpeed = 3;
+    let score = 0;
+    let gameOver = false;
+    let gameRunning = false;
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
-<script>
-let scene, camera, renderer;
-let ball, hole;
-let money = 0;
-let power = 1;
-let precision = 1;
-let ballVelocity = new THREE.Vector3(0,0,0);
-let isMoving = false;
-let mouseStart = null;
+    document.addEventListener("keydown", movePlayer);
 
-const startButton = document.getElementById('startButton');
-const shopButton = document.getElementById('shopButton');
-const moneyEl = document.getElementById('money');
-const shop = document.getElementById('shop');
-const upgradePower = document.getElementById('upgradePower');
-const upgradePrecision = document.getElementById('upgradePrecision');
-const closeShop = document.getElementById('closeShop');
-const startScreen = document.getElementById('startScreen');
-const playButton = document.getElementById('playButton');
-
-startButton.onclick = () => { startScreen.style.display='block'; };
-playButton.onclick = () => { startScreen.style.display='none'; init(); animate(); };
-shopButton.onclick = () => { shop.style.display='block'; };
-closeShop.onclick = () => { shop.style.display='none'; };
-upgradePower.onclick = () => { if(money >= 100){ money-=100; power+=0.5; updateMoney(); } };
-upgradePrecision.onclick = () => { if(money >= 100){ money-=100; precision+=0.1; updateMoney(); } };
-
-function updateMoney(){ moneyEl.textContent = money; }
-
-function init(){
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 10, 20);
-    camera.lookAt(0,0,0);
-
-    renderer = new THREE.WebGLRenderer({antialias:true});
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Light
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5,10,7.5);
-    scene.add(light);
-
-    // Ground
-    const groundGeometry = new THREE.PlaneGeometry(50,50);
-    const groundMaterial = new THREE.MeshStandardMaterial({color:0x228B22});
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI/2;
-    scene.add(ground);
-
-    // Ball
-    const ballGeometry = new THREE.SphereGeometry(0.5,32,32);
-    const ballMaterial = new THREE.MeshStandardMaterial({color:0xffffff});
-    ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.set(0,0.5,0);
-    scene.add(ball);
-
-    // Hole
-    const holeGeometry = new THREE.CylinderGeometry(0.7,0.7,0.1,32);
-    const holeMaterial = new THREE.MeshStandardMaterial({color:0x000000});
-    hole = new THREE.Mesh(holeGeometry, holeMaterial);
-    hole.position.set(Math.random()*20-10,0.05,Math.random()*20-10);
-    scene.add(hole);
-
-    // Event listeners for shooting
-    window.addEventListener('mousedown', (e)=>{ mouseStart = {x:e.clientX, y:e.clientY}; });
-    window.addEventListener('mouseup', (e)=>{ if(mouseStart){
-        const dx = (e.clientX - mouseStart.x)/50;
-        const dz = (e.clientY - mouseStart.y)/50;
-        ballVelocity.set(dx*power,0,dz*power);
-        isMoving = true;
-        mouseStart = null;
-    }});
-}
-
-function animate(){
-    requestAnimationFrame(animate);
-
-    if(isMoving){
-        ball.position.add(ballVelocity);
-        ballVelocity.multiplyScalar(0.98); // friction
-        if(ballVelocity.length() < 0.01) isMoving = false;
-
-        // Check hole
-        const dist = ball.position.distanceTo(hole.position);
-        if(dist < 1){
-            money += 50;
-            updateMoney();
-            resetBall();
-        }
+    function movePlayer(e) {
+      if (!gameRunning) return;
+      if (e.key === "ArrowLeft" && player.x > 0) {
+        player.x -= player.speed;
+      } else if (e.key === "ArrowRight" && player.x < canvas.width - player.width) {
+        player.x += player.speed;
+      }
     }
 
-    renderer.render(scene, camera);
-}
+    function spawnBlock() {
+      if (!gameRunning) return;
+      const x = Math.random() * (canvas.width - 40);
+      blocks.push({ x: x, y: -40, width: 40, height: 40 });
+    }
 
-function resetBall(){
-    ball.position.set(0,0.5,0);
-    hole.position.set(Math.random()*20-10,0.05,Math.random()*20-10);
-    ballVelocity.set(0,0,0);
-    isMoving = false;
-}
-</script>
+    function update() {
+      if (!gameRunning) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Rita spelaren
+      ctx.fillStyle = "lime";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Rita block
+      ctx.fillStyle = "red";
+      blocks.forEach((block, i) => {
+        block.y += blockSpeed;
+        ctx.fillRect(block.x, block.y, block.width, block.height);
+
+        // Kollision
+        if (
+          player.x < block.x + block.width &&
+          player.x + player.width > block.x &&
+          player.y < block.y + block.height &&
+          player.y + player.height > block.y
+        ) {
+          endGame();
+        }
+
+        // Ta bort block som lämnar skärmen
+        if (block.y > canvas.height) {
+          blocks.splice(i, 1);
+          score++;
+          scoreDiv.innerText = "Poäng: " + score;
+        }
+      });
+
+      requestAnimationFrame(update);
+    }
+
+    function startGame() {
+      blocks = [];
+      score = 0;
+      gameOver = false;
+      gameRunning = true;
+      player.x = 180;
+
+      menu.style.display = "none";
+      scoreDiv.style.display = "block";
+      scoreDiv.innerText = "Poäng: 0";
+
+      setInterval(spawnBlock, 1000);
+      update();
+    }
+
+    function endGame() {
+      gameRunning = false;
+      gameOver = true;
+      scoreDiv.innerText = "Game Over! Slutpoäng: " + score;
+
+      // Visa meny igen efter kort delay
+      setTimeout(() => {
+        menu.style.display = "block";
+        menu.innerHTML = `
+          <h1>Game Over!</h1>
+          <p>Slutpoäng: ${score}</p>
+          <button id="restartBtn">Spela igen</button>
+        `;
+        document.getElementById("restartBtn").onclick = startGame;
+      }, 1000);
+    }
+
+    startBtn.onclick = startGame;
+  </script>
 </body>
 </html>
