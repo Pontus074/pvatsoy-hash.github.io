@@ -1,45 +1,28 @@
-html lang="sv">
+<!doctype html>
+<html lang="sv">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bensinpriskollen</title>
+  <title>Bensinpriser nära mig</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
-    <h1>Bensinpriskollen</h1>
+    <h1>Bensinpriser i närheten</h1>
 
     <div class="controls">
       <label>
-        Region:
-        <select id="region">
-          <option value="all">Alla</option>
-          <option value="stockholm">Stockholm</option>
-          <option value="göteborg">Göteborg</option>
-          <!-- Lägg till fler efter behov -->
-        </select>
+        Ort / Position:
+        <input type="text" id="place" placeholder="Alingsås, Nossebro eller 'lat,lon'">
       </label>
-
-      <label>
-        Bränsle:
-        <select id="fuelType">
-          <option value="95">95 (E10/E5)</option>
-          <option value="98">98</option>
-          <option value="diesel">Diesel</option>
-        </select>
-      </label>
-
-      <button id="refresh">Uppdatera</button>
+      <button id="refresh">Visa</button>
     </div>
 
-    <section id="status" class="status">Läser in…</section>
-
-    <section id="result" class="result">
-      <!-- Resultat visas här -->
-    </section>
+    <section id="status" class="status">Klar att söka.</section>
+    <section id="result" class="result"></section>
 
     <footer>
-      <small>Data från: demo / vald API. Byt endpoint i <code>app.js</code>.</small>
+      <small>Data från Henrik Hjelms bensinpris-API</small>
     </footer>
   </main>
 
