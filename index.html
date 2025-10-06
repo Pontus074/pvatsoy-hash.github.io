@@ -1,153 +1,48 @@
-<!DOCTYPE html>
-<html lang="sv">
+html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <title>Dodge the Blocks</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-    #gameCanvas {
-      background: #222;
-      display: block;
-      margin: auto;
-      border: 2px solid white;
-    }
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 20px;
-      display: none;
-    }
-    #menu {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      margin-top: 15px;
-      cursor: pointer;
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bensinpriskollen</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="score">Poäng: 0</div>
-  <div id="menu">
-    <h1>Dodge the Blocks</h1>
-    <button id="startBtn">Starta spel</button>
-  </div>
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <main class="container">
+    <h1>Bensinpriskollen</h1>
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const scoreDiv = document.getElementById("score");
-    const menu = document.getElementById("menu");
-    const startBtn = document.getElementById("startBtn");
+    <div class="controls">
+      <label>
+        Region:
+        <select id="region">
+          <option value="all">Alla</option>
+          <option value="stockholm">Stockholm</option>
+          <option value="göteborg">Göteborg</option>
+          <!-- Lägg till fler efter behov -->
+        </select>
+      </label>
 
-    const player = { x: 180, y: 550, width: 40, height: 40, speed: 5 };
-    let blocks = [];
-    let blockSpeed = 3;
-    let score = 0;
-    let gameOver = false;
-    let gameRunning = false;
+      <label>
+        Bränsle:
+        <select id="fuelType">
+          <option value="95">95 (E10/E5)</option>
+          <option value="98">98</option>
+          <option value="diesel">Diesel</option>
+        </select>
+      </label>
 
-    document.addEventListener("keydown", movePlayer);
+      <button id="refresh">Uppdatera</button>
+    </div>
 
-    function movePlayer(e) {
-      if (!gameRunning) return;
-      if (e.key === "ArrowLeft" && player.x > 0) {
-        player.x -= player.speed;
-      } else if (e.key === "ArrowRight" && player.x < canvas.width - player.width) {
-        player.x += player.speed;
-      }
-    }
+    <section id="status" class="status">Läser in…</section>
 
-    function spawnBlock() {
-      if (!gameRunning) return;
-      const x = Math.random() * (canvas.width - 40);
-      blocks.push({ x: x, y: -40, width: 40, height: 40 });
-    }
+    <section id="result" class="result">
+      <!-- Resultat visas här -->
+    </section>
 
-    function update() {
-      if (!gameRunning) return;
+    <footer>
+      <small>Data från: demo / vald API. Byt endpoint i <code>app.js</code>.</small>
+    </footer>
+  </main>
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Rita spelaren
-      ctx.fillStyle = "lime";
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      // Rita block
-      ctx.fillStyle = "red";
-      blocks.forEach((block, i) => {
-        block.y += blockSpeed;
-        ctx.fillRect(block.x, block.y, block.width, block.height);
-
-        // Kollision
-        if (
-          player.x < block.x + block.width &&
-          player.x + player.width > block.x &&
-          player.y < block.y + block.height &&
-          player.y + player.height > block.y
-        ) {
-          endGame();
-        }
-
-        // Ta bort block som lämnar skärmen
-        if (block.y > canvas.height) {
-          blocks.splice(i, 1);
-          score++;
-          scoreDiv.innerText = "Poäng: " + score;
-        }
-      });
-
-      requestAnimationFrame(update);
-    }
-
-    function startGame() {
-      blocks = [];
-      score = 0;
-      gameOver = false;
-      gameRunning = true;
-      player.x = 180;
-
-      menu.style.display = "none";
-      scoreDiv.style.display = "block";
-      scoreDiv.innerText = "Poäng: 0";
-
-      setInterval(spawnBlock, 1000);
-      update();
-    }
-
-    function endGame() {
-      gameRunning = false;
-      gameOver = true;
-      scoreDiv.innerText = "Game Over! Slutpoäng: " + score;
-
-      // Visa meny igen efter kort delay
-      setTimeout(() => {
-        menu.style.display = "block";
-        menu.innerHTML = `
-          <h1>Game Over!</h1>
-          <p>Slutpoäng: ${score}</p>
-          <button id="restartBtn">Spela igen</button>
-        `;
-        document.getElementById("restartBtn").onclick = startGame;
-      }, 1000);
-    }
-
-    startBtn.onclick = startGame;
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
